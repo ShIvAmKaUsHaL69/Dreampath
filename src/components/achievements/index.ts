@@ -1,0 +1,1 @@
+export { BadgeGrid } from './BadgeGrid';
