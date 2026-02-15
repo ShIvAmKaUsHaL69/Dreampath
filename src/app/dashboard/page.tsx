@@ -9,21 +9,21 @@ export default function DashboardPage() {
 
   return (
     <AppLayout title="Dashboard">
-      <div className="space-y-6">
-        {/* Welcome Message */}
+      <div className="space-y-6 ">
+        {/* Welcome */}
         <div>
-          <h2 className="text-2xl font-bold">
-            Welcome back, {student?.name?.split(' ')[0] || 'Student'}!
+          <h2 className="text-xl font-bold tracking-tight">
+            Welcome back, {student?.name?.split(' ')[0] || 'Student'}
           </h2>
-          <p className="text-muted-foreground">
-            Here&apos;s your progress overview for today.
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Here&apos;s your progress overview.
           </p>
         </div>
 
         {/* Stats */}
         <StatsCards />
 
-        {/* Main Content Grid */}
+        {/* Main Grid */}
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             <TodayTasks />

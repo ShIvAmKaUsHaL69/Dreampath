@@ -11,13 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 
 const notifications = [
-  { id: 1, title: 'Complete your daily tasks', time: '2 hours ago', read: false },
-  { id: 2, title: 'New career added: AI Engineer', time: '1 day ago', read: false },
-  { id: 3, title: 'You achieved a 7-day streak!', time: '2 days ago', read: true },
-  { id: 4, title: 'Check out new study resources', time: '3 days ago', read: true },
+  { id: 1, title: 'Complete your daily tasks', time: '2h ago', read: false },
+  { id: 2, title: 'New career added: AI Engineer', time: '1d ago', read: false },
+  { id: 3, title: 'You achieved a 7-day streak!', time: '2d ago', read: true },
+  { id: 4, title: 'Check out new study resources', time: '3d ago', read: true },
 ];
 
 interface HeaderProps {
@@ -28,60 +27,48 @@ export function Header({ title }: HeaderProps) {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
+    <header className="flex h-14 items-center justify-between border-b bg-card px-6">
       <div className="flex items-center gap-4">
-        {title && <h1 className="text-xl font-semibold">{title}</h1>}
+        {title && <h1 className="text-base font-semibold">{title}</h1>}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         {/* Search */}
         <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search careers, resources..."
-            className="w-64 pl-9"
+            placeholder="Search..."
+            className="w-52 h-8 pl-8 text-sm"
           />
         </div>
 
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="relative h-8 w-8 cursor-pointer">
+              <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                >
+                <span className="absolute -right-0.5 -top-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold grid place-items-center">
                   {unreadCount}
-                </Badge>
+                </span>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuLabel className="text-xs">Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {notifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className="flex flex-col items-start gap-1 p-3"
-              >
+            {notifications.map((n) => (
+              <DropdownMenuItem key={n.id} className="flex flex-col items-start gap-0.5 p-3 cursor-pointer">
                 <div className="flex items-center gap-2">
-                  {!notification.read && (
-                    <div className="h-2 w-2 rounded-full bg-primary" />
-                  )}
-                  <span className={notification.read ? 'text-muted-foreground' : ''}>
-                    {notification.title}
-                  </span>
+                  {!n.read && <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
+                  <span className={`text-sm ${n.read ? 'text-muted-foreground' : 'font-medium'}`}>{n.title}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {notification.time}
-                </span>
+                <span className="text-xs text-muted-foreground ml-3.5">{n.time}</span>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-center justify-center text-primary">
-              View all notifications
+            <DropdownMenuItem className="justify-center text-xs text-primary font-medium cursor-pointer">
+              View all
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -11,20 +11,20 @@ export function StreakCalendar() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base">Weekly Streak</CardTitle>
-        <div className="flex items-center gap-1 text-orange-500">
-          <Flame className="h-5 w-5" />
-          <span className="font-bold">{student?.streak || 0}</span>
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardTitle className="text-base font-semibold">Streak</CardTitle>
+        <div className="flex items-center gap-1 text-sm font-bold text-foreground">
+          <Flame className="h-4 w-4 text-orange-500" />
+          {student?.streak || 0}
         </div>
       </CardHeader>
       <CardContent>
         <div className="flex justify-between">
-          {streakData.map((day, index) => (
-            <div key={index} className="flex flex-col items-center gap-2">
+          {streakData.map((day, i) => (
+            <div key={i} className="flex flex-col items-center gap-1.5">
               <div
                 className={cn(
-                  'h-10 w-10 rounded-full flex items-center justify-center text-sm font-medium transition-all',
+                  'h-8 w-8 rounded-full grid place-items-center text-xs font-semibold transition-colors',
                   day.completed
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground'
@@ -32,19 +32,9 @@ export function StreakCalendar() {
               >
                 {day.completed ? '✓' : ''}
               </div>
-              <span className="text-xs text-muted-foreground">{day.day}</span>
+              <span className="text-[10px] font-medium text-muted-foreground">{day.day}</span>
             </div>
           ))}
-        </div>
-        <div className="mt-4 flex items-center justify-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-primary" />
-            <span className="text-muted-foreground">Completed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-muted" />
-            <span className="text-muted-foreground">Missed</span>
-          </div>
         </div>
       </CardContent>
     </Card>

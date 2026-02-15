@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Task } from '@/types';
 import { cn } from '@/lib/utils';
 import { Calendar, Filter, Plus } from 'lucide-react';
@@ -21,23 +21,10 @@ interface TaskListProps {
   onToggle: (taskId: string) => void;
 }
 
-const categoryColors: Record<string, string> = {
-  study: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-  skill: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  research: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-  'self-improvement': 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
-};
-
-const priorityColors: Record<string, string> = {
-  high: 'border-l-red-500',
-  medium: 'border-l-yellow-500',
-  low: 'border-l-gray-400',
-};
-
-const priorityDots: Record<string, string> = {
+const priorityDot: Record<string, string> = {
   high: 'bg-red-500',
-  medium: 'bg-yellow-500',
-  low: 'bg-gray-400',
+  medium: 'bg-amber-500',
+  low: 'bg-muted-foreground/40',
 };
 
 export function TaskList({ tasks, onToggle }: TaskListProps) {
@@ -48,182 +35,117 @@ export function TaskList({ tasks, onToggle }: TaskListProps) {
   const tomorrow = new Date(Date.now() + 86400000).toDateString();
 
   const filteredTasks = tasks.filter((task) => {
-    if (categoryFilter !== 'all' && task.category !== categoryFilter) {
-      return false;
-    }
+    if (categoryFilter !== 'all' && task.category !== categoryFilter) return false;
     if (filter === 'completed') return task.completed;
     if (filter === 'pending') return !task.completed;
     return true;
   });
 
-  const todayTasks = filteredTasks.filter(
-    (t) => new Date(t.dueDate).toDateString() === today
-  );
-  const tomorrowTasks = filteredTasks.filter(
-    (t) => new Date(t.dueDate).toDateString() === tomorrow
-  );
+  const todayTasks = filteredTasks.filter((t) => new Date(t.dueDate).toDateString() === today);
+  const tomorrowTasks = filteredTasks.filter((t) => new Date(t.dueDate).toDateString() === tomorrow);
   const upcomingTasks = filteredTasks.filter(
-    (t) =>
-      new Date(t.dueDate).toDateString() !== today &&
-      new Date(t.dueDate).toDateString() !== tomorrow
+    (t) => new Date(t.dueDate).toDateString() !== today && new Date(t.dueDate).toDateString() !== tomorrow
   );
 
   const TaskItem = ({ task }: { task: Task }) => (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-lg border-l-4 bg-card p-4 shadow-sm transition-all hover:shadow-md',
-        priorityColors[task.priority],
-        task.completed && 'opacity-60'
+        'flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-muted/50 transition-colors cursor-pointer',
+        task.completed && 'opacity-50'
       )}
+      onClick={() => onToggle(task.id)}
     >
       <Checkbox
         checked={task.completed}
         onCheckedChange={() => onToggle(task.id)}
-        className="mt-1"
+        className="cursor-pointer shrink-0"
       />
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p
-              className={cn(
-                'font-medium',
-                task.completed && 'line-through text-muted-foreground'
-              )}
-            >
-              {task.title}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {task.description}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={cn('h-2 w-2 rounded-full', priorityDots[task.priority])} />
-            <Badge
-              variant="secondary"
-              className={cn('shrink-0', categoryColors[task.category])}
-            >
-              {task.category}
-            </Badge>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-          <Calendar className="h-3 w-3" />
-          <span>
-            {new Date(task.dueDate).toLocaleDateString('en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-            })}
-          </span>
-        </div>
+        <p className={cn('text-sm font-medium', task.completed && 'line-through text-muted-foreground')}>
+          {task.title}
+        </p>
+        {task.description && (
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{task.description}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-[10px] text-muted-foreground hidden sm:inline-flex items-center gap-1">
+          <Calendar className="h-2.5 w-2.5" />
+          {new Date(task.dueDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+        </span>
+        <div className={cn('h-1.5 w-1.5 rounded-full', priorityDot[task.priority])} />
+        <Badge variant="secondary" className="text-[10px] font-medium">
+          {task.category}
+        </Badge>
       </div>
     </div>
   );
 
+  const TaskSection = ({ label, count, tasks: sectionTasks }: { label: string; count: number; tasks: Task[] }) => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-semibold">{label}</CardTitle>
+        <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
+      </CardHeader>
+      <CardContent className="space-y-0.5">
+        {sectionTasks.map((task) => (
+          <TaskItem key={task.id} task={task} />
+        ))}
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Filters */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <Tabs value={filter} onValueChange={setFilter}>
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsList className="h-8">
+            <TabsTrigger value="all" className="text-xs cursor-pointer">All</TabsTrigger>
+            <TabsTrigger value="pending" className="text-xs cursor-pointer">Pending</TabsTrigger>
+            <TabsTrigger value="completed" className="text-xs cursor-pointer">Done</TabsTrigger>
           </TabsList>
         </Tabs>
 
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" />
-                {categoryFilter === 'all' ? 'All Categories' : categoryFilter}
+              <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs cursor-pointer">
+                <Filter className="h-3 w-3" />
+                {categoryFilter === 'all' ? 'Category' : categoryFilter}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setCategoryFilter('all')}>
-                All Categories
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCategoryFilter('study')}>
-                Study
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCategoryFilter('skill')}>
-                Skill
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCategoryFilter('research')}>
-                Research
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setCategoryFilter('self-improvement')}>
-                Self-Improvement
-              </DropdownMenuItem>
+              {['all', 'study', 'skill', 'research', 'self-improvement'].map((cat) => (
+                <DropdownMenuItem key={cat} onClick={() => setCategoryFilter(cat)} className="cursor-pointer capitalize">
+                  {cat === 'all' ? 'All Categories' : cat}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
+          <Button size="sm" className="gap-1.5 h-8 text-xs cursor-pointer">
+            <Plus className="h-3 w-3" />
             Add Task
           </Button>
         </div>
       </div>
 
-      {/* Today's Tasks */}
+      {/* Sections */}
       {todayTasks.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-green-500" />
-              Today
-              <Badge variant="secondary">{todayTasks.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {todayTasks.map((task) => (
-              <TaskItem key={task.id} task={task} />
-            ))}
-          </CardContent>
-        </Card>
+        <TaskSection label="Today" count={todayTasks.length} tasks={todayTasks} />
       )}
-
-      {/* Tomorrow's Tasks */}
       {tomorrowTasks.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-yellow-500" />
-              Tomorrow
-              <Badge variant="secondary">{tomorrowTasks.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {tomorrowTasks.map((task) => (
-              <TaskItem key={task.id} task={task} />
-            ))}
-          </CardContent>
-        </Card>
+        <TaskSection label="Tomorrow" count={tomorrowTasks.length} tasks={tomorrowTasks} />
       )}
-
-      {/* Upcoming Tasks */}
       {upcomingTasks.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-blue-500" />
-              Upcoming
-              <Badge variant="secondary">{upcomingTasks.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {upcomingTasks.map((task) => (
-              <TaskItem key={task.id} task={task} />
-            ))}
-          </CardContent>
-        </Card>
+        <TaskSection label="Upcoming" count={upcomingTasks.length} tasks={upcomingTasks} />
       )}
 
       {filteredTasks.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">No tasks found</p>
+            <p className="text-sm text-muted-foreground">No tasks found.</p>
           </CardContent>
         </Card>
       )}

@@ -1,61 +1,34 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Compass, Map, MessageSquare, BookOpen } from 'lucide-react';
+import { Compass, Map, MessageSquare, BookOpen, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 
 const actions = [
-  {
-    href: '/careers',
-    label: 'Explore Careers',
-    icon: Compass,
-    color: 'text-blue-500',
-    bg: 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900',
-  },
-  {
-    href: '/roadmap',
-    label: 'View Roadmap',
-    icon: Map,
-    color: 'text-green-500',
-    bg: 'bg-green-50 hover:bg-green-100 dark:bg-green-950 dark:hover:bg-green-900',
-  },
-  {
-    href: '/ai-assistant',
-    label: 'Ask AI Assistant',
-    icon: MessageSquare,
-    color: 'text-purple-500',
-    bg: 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950 dark:hover:bg-purple-900',
-  },
-  {
-    href: '/resources',
-    label: 'Study Resources',
-    icon: BookOpen,
-    color: 'text-orange-500',
-    bg: 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-950 dark:hover:bg-orange-900',
-  },
+  { href: '/careers', label: 'Explore Careers', icon: Compass },
+  { href: '/roadmap', label: 'View Roadmap', icon: Map },
+  { href: '/ai-assistant', label: 'Ask AI', icon: MessageSquare },
+  { href: '/resources', label: 'Resources', icon: BookOpen },
 ];
 
 export function QuickActions() {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Quick Actions</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-3">
-          {actions.map((action) => (
-            <Link key={action.href} href={action.href}>
-              <Button
-                variant="ghost"
-                className={`h-auto w-full flex-col gap-2 py-4 ${action.bg}`}
-              >
-                <action.icon className={`h-6 w-6 ${action.color}`} />
-                <span className="text-xs font-medium">{action.label}</span>
-              </Button>
-            </Link>
-          ))}
-        </div>
+      <CardContent className="space-y-0.5">
+        {actions.map((action) => (
+          <Link
+            key={action.href}
+            href={action.href}
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors cursor-pointer group"
+          >
+            <action.icon className="h-4 w-4 shrink-0" />
+            <span className="flex-1">{action.label}</span>
+            <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Link>
+        ))}
       </CardContent>
     </Card>
   );

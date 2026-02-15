@@ -7,11 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { useApp } from '@/contexts/AppContext';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, ArrowRight, Check, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft, ArrowRight, Check, Sparkles,
+  Compass, Map, Brain, ChevronRight
+} from 'lucide-react';
+
+const introScreens = [
+  {
+    lucideIcon: Sparkles,
+    title: 'Welcome to DreamPath',
+    description: 'Your AI-powered career guide. Explore careers, build personalized roadmaps, and achieve your dreams — step by step.',
+  },
+  {
+    lucideIcon: Compass,
+    title: 'Explore Career Paths',
+    description: 'Browse 100+ careers with real insights — salary, difficulty, entrance exams, and daily life info to help you decide.',
+  },
+  {
+    lucideIcon: Map,
+    title: 'Get Your Personalized Roadmap',
+    description: 'Answer a few questions and we\'ll create a custom plan matching your interests, skills, and academic background.',
+  },
+];
 
 const interestOptions = [
   'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science',
@@ -35,25 +55,29 @@ const skillOptions = [
 export function OnboardingFlow() {
   const router = useRouter();
   const { onboardingData, setOnboardingData, setOnboardingComplete, setStudent } = useApp();
-  const [step, setStep] = useState(1);
-  const totalSteps = 5;
+  const [step, setStep] = useState(0); // 0-2 = intro screens, 3-7 = data collection
+  const totalSteps = 8; // 3 intro + 5 data collection
+  const introStepCount = 3;
 
-  const progress = (step / totalSteps) * 100;
+  const progress = (step / (totalSteps - 1)) * 100;
 
   const handleNext = () => {
-    if (step < totalSteps) {
+    if (step < totalSteps - 1) {
       setStep(step + 1);
     }
   };
 
   const handleBack = () => {
-    if (step > 1) {
+    if (step > 0) {
       setStep(step - 1);
     }
   };
 
+  const handleSkipIntro = () => {
+    setStep(introStepCount);
+  };
+
   const handleComplete = () => {
-    // Create student profile from onboarding data
     setStudent({
       id: '1',
       name: onboardingData.name,
@@ -86,7 +110,9 @@ export function OnboardingFlow() {
   };
 
   const isStepValid = () => {
-    switch (step) {
+    if (step < introStepCount) return true; // intro steps always valid
+    const dataStep = step - introStepCount + 1;
+    switch (dataStep) {
       case 1:
         return onboardingData.name.length >= 2 && onboardingData.email.includes('@');
       case 2:
@@ -102,36 +128,80 @@ export function OnboardingFlow() {
     }
   };
 
+  const isIntroScreen = step < introStepCount;
+  const dataStep = step - introStepCount + 1;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/10 flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl overflow-hidden">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-lg shadow-primary/25">
               D
             </div>
             <span className="text-2xl font-bold">DreamPath</span>
           </div>
           <Progress value={progress} className="h-2 mb-4" />
-          <CardTitle>
-            {step === 1 && "Let's get to know you"}
-            {step === 2 && 'Tell us about your academics'}
-            {step === 3 && 'What subjects interest you?'}
-            {step === 4 && 'Your hobbies & skills'}
-            {step === 5 && 'How serious are your goals?'}
-          </CardTitle>
-          <CardDescription>
-            {step === 1 && 'Start by telling us your name and email'}
-            {step === 2 && 'Select your current class and academic stream'}
-            {step === 3 && 'Select at least 3 subjects that interest you'}
-            {step === 4 && 'Help us understand you better'}
-            {step === 5 && 'This helps us customize your roadmap'}
-          </CardDescription>
+
+          {/* Intro screen titles */}
+          {isIntroScreen && (
+            <>
+              <CardTitle className="animate-fade-in-up">{introScreens[step].title}</CardTitle>
+              <CardDescription className="animate-fade-in-up stagger-1">
+                {introScreens[step].description}
+              </CardDescription>
+            </>
+          )}
+
+          {/* Data collection titles */}
+          {!isIntroScreen && (
+            <>
+              <CardTitle>
+                {dataStep === 1 && "Let's get to know you"}
+                {dataStep === 2 && 'Tell us about your academics'}
+                {dataStep === 3 && 'What subjects interest you?'}
+                {dataStep === 4 && 'Your hobbies & skills'}
+                {dataStep === 5 && 'How serious are your goals?'}
+              </CardTitle>
+              <CardDescription>
+                {dataStep === 1 && 'Start by telling us your name and email'}
+                {dataStep === 2 && 'Select your current class and academic stream'}
+                {dataStep === 3 && 'Select at least 3 subjects that interest you'}
+                {dataStep === 4 && 'Help us understand you better'}
+                {dataStep === 5 && 'This helps us customize your roadmap'}
+              </CardDescription>
+            </>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Intro Screens  — Issue 11 */}
+          {isIntroScreen && (() => {
+            const IconComponent = introScreens[step].lucideIcon;
+            return (
+              <div className="flex flex-col items-center py-8" key={step}>
+                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-muted mb-6">
+                  <IconComponent className="h-10 w-10 text-primary" />
+                </div>
+
+                {/* Dots indicator */}
+                <div className="flex items-center gap-2 mt-4">
+                  {introScreens.map((_, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        'h-2 rounded-full transition-all duration-300',
+                        i === step ? 'w-6 bg-primary' : 'w-2 bg-muted-foreground/30'
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Step 1: Basic Info */}
-          {step === 1 && (
-            <div className="space-y-4">
+          {!isIntroScreen && dataStep === 1 && (
+            <div className="space-y-4 animate-fade-in-up">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -159,8 +229,8 @@ export function OnboardingFlow() {
           )}
 
           {/* Step 2: Academic Info */}
-          {step === 2 && (
-            <div className="space-y-6">
+          {!isIntroScreen && dataStep === 2 && (
+            <div className="space-y-6 animate-fade-in-up">
               <div className="space-y-3">
                 <Label>Select your class</Label>
                 <div className="grid grid-cols-5 gap-2">
@@ -169,7 +239,7 @@ export function OnboardingFlow() {
                       key={grade}
                       variant={onboardingData.grade === grade ? 'default' : 'outline'}
                       onClick={() => setOnboardingData({ ...onboardingData, grade })}
-                      className="h-12"
+                      className="h-12 transition-smooth"
                     >
                       Class {grade}
                     </Button>
@@ -194,10 +264,10 @@ export function OnboardingFlow() {
                     <Label
                       key={option.value}
                       className={cn(
-                        'flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-all',
+                        'flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-smooth',
                         onboardingData.stream === option.value
-                          ? 'border-primary bg-primary/5'
-                          : 'hover:bg-muted'
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'hover:bg-muted hover:border-muted-foreground/20'
                       )}
                     >
                       <RadioGroupItem value={option.value} />
@@ -213,8 +283,8 @@ export function OnboardingFlow() {
           )}
 
           {/* Step 3: Interests */}
-          {step === 3 && (
-            <div className="space-y-4">
+          {!isIntroScreen && dataStep === 3 && (
+            <div className="space-y-4 animate-fade-in-up">
               <p className="text-sm text-muted-foreground">
                 Selected: {onboardingData.interests.length} / 3 minimum
               </p>
@@ -226,6 +296,7 @@ export function OnboardingFlow() {
                       onboardingData.interests.includes(interest) ? 'default' : 'outline'
                     }
                     size="sm"
+                    className="transition-smooth"
                     onClick={() =>
                       toggleArrayItem(onboardingData.interests, interest, 'interests')
                     }
@@ -241,8 +312,8 @@ export function OnboardingFlow() {
           )}
 
           {/* Step 4: Hobbies & Skills */}
-          {step === 4 && (
-            <div className="space-y-6">
+          {!isIntroScreen && dataStep === 4 && (
+            <div className="space-y-6 animate-fade-in-up">
               <div className="space-y-3">
                 <Label>Hobbies (select at least 1)</Label>
                 <div className="flex flex-wrap gap-2">
@@ -253,6 +324,7 @@ export function OnboardingFlow() {
                         onboardingData.hobbies.includes(hobby) ? 'default' : 'outline'
                       }
                       size="sm"
+                      className="transition-smooth"
                       onClick={() =>
                         toggleArrayItem(onboardingData.hobbies, hobby, 'hobbies')
                       }
@@ -272,6 +344,7 @@ export function OnboardingFlow() {
                         onboardingData.skills.includes(skill) ? 'default' : 'outline'
                       }
                       size="sm"
+                      className="transition-smooth"
                       onClick={() =>
                         toggleArrayItem(onboardingData.skills, skill, 'skills')
                       }
@@ -285,8 +358,8 @@ export function OnboardingFlow() {
           )}
 
           {/* Step 5: Goal Intensity */}
-          {step === 5 && (
-            <div className="space-y-4">
+          {!isIntroScreen && dataStep === 5 && (
+            <div className="space-y-4 animate-fade-in-up">
               <RadioGroup
                 value={onboardingData.goalIntensity}
                 onValueChange={(value: 'casual' | 'serious' | 'highly-focused') =>
@@ -317,10 +390,10 @@ export function OnboardingFlow() {
                   <Label
                     key={option.value}
                     className={cn(
-                      'flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-all',
+                      'flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-smooth',
                       onboardingData.goalIntensity === option.value
-                        ? 'border-primary bg-primary/5'
-                        : 'hover:bg-muted'
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'hover:bg-muted hover:border-muted-foreground/20'
                     )}
                   >
                     <RadioGroupItem value={option.value} />
@@ -337,26 +410,37 @@ export function OnboardingFlow() {
 
           {/* Navigation */}
           <div className="flex justify-between pt-4">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={step === 1}
-              className="gap-1"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            {step < totalSteps ? (
-              <Button onClick={handleNext} disabled={!isStepValid()} className="gap-1">
-                Next
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+            {isIntroScreen && step === 0 ? (
+              <div />
             ) : (
-              <Button onClick={handleComplete} className="gap-1">
-                <Sparkles className="h-4 w-4" />
-                Start My Journey
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                className="gap-1 transition-smooth"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
               </Button>
             )}
+
+            <div className="flex items-center gap-2">
+              {isIntroScreen && (
+                <Button variant="ghost" onClick={handleSkipIntro} className="text-muted-foreground">
+                  Skip
+                </Button>
+              )}
+              {step < totalSteps - 1 ? (
+                <Button onClick={handleNext} disabled={!isStepValid()} className="gap-1 transition-smooth">
+                  {isIntroScreen ? 'Next' : 'Continue'}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button onClick={handleComplete} className="gap-1 shadow-lg shadow-primary/25">
+                  <Sparkles className="h-4 w-4" />
+                  Start My Journey
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
