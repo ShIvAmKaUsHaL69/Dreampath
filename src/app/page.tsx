@@ -35,8 +35,8 @@ export default function Home() {
             </Link>
           ) : (
             <>
-              <Link href="/onboarding"><Button variant="ghost" size="sm" className="cursor-pointer">Log in</Button></Link>
-              <Link href="/onboarding"><Button size="sm" className="rounded-full gap-1.5 cursor-pointer">Get Started <ArrowRight className="h-3.5 w-3.5" /></Button></Link>
+              <Link href="/login"><Button variant="ghost" size="sm" className="cursor-pointer">Log in</Button></Link>
+              <Link href="/signup"><Button size="sm" className="rounded-full gap-1.5 cursor-pointer">Get Started <ArrowRight className="h-3.5 w-3.5" /></Button></Link>
             </>
           )}
         </nav>

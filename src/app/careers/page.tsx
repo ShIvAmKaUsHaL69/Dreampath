@@ -1,34 +1,50 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout';
 import { CareerCard, CareerComparison } from '@/components/careers';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { careers, careerCategories } from '@/data/careers';
-import { Search, X, Compass, Filter } from 'lucide-react';
+import { Career } from '@/types';
+import { Search, X, Compass, Filter, Loader2 } from 'lucide-react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
 const streamOptions = ['All Streams', 'Science', 'Commerce', 'Arts'] as const;
 const difficultyOptions = ['All Levels', 'Low', 'Medium', 'High', 'Very High'] as const;
 
 export default function CareersPage() {
-  const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStream, setSelectedStream] = useState<string>('All Streams');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All Levels');
   const [selectedCareers, setSelectedCareers] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
+  const [careers, setCareers] = useState<Career[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch('/api/careers?limit=100')
+      .then(res => res.json())
+      .then(data => {
+        setCareers(data.careers || []);
+        // Extract unique categories
+        const cats = [...new Set((data.careers || []).map((c: Career) => c.category))];
+        setCategories(cats as string[]);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const filteredCareers = careers.filter((career) => {
-    const matchesSearch =
+    const matchesSearch = !search ||
       career.title.toLowerCase().includes(search.toLowerCase()) ||
       career.description.toLowerCase().includes(search.toLowerCase()) ||
       career.skillsRequired.some(s => s.toLowerCase().includes(search.toLowerCase()));
@@ -68,6 +84,16 @@ export default function CareersPage() {
     setSelectedDifficulty('All Levels');
     setSearch('');
   };
+
+  if (loading) {
+    return (
+      <AppLayout title="Careers">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout title="Careers">
@@ -111,7 +137,7 @@ export default function CareersPage() {
                 <DropdownMenuItem onClick={() => setSelectedCategory('all')} className="cursor-pointer">
                   All Categories
                 </DropdownMenuItem>
-                {careerCategories.map((category) => (
+                {categories.map((category) => (
                   <DropdownMenuItem key={category} onClick={() => setSelectedCategory(category)} className="cursor-pointer">
                     {category}
                   </DropdownMenuItem>
@@ -192,6 +218,13 @@ export default function CareersPage() {
           </div>
         )}
 
+        {/* Comparison Table — at top */}
+        <CareerComparison
+          careers={comparisonCareers}
+          onRemove={(id) => setSelectedCareers(selectedCareers.filter((cid) => cid !== id))}
+          onClear={() => setSelectedCareers([])}
+        />
+
         {/* Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCareers.map((career) => (
@@ -213,12 +246,6 @@ export default function CareersPage() {
             onAction={clearFilters}
           />
         )}
-
-        <CareerComparison
-          careers={comparisonCareers}
-          onRemove={(id) => setSelectedCareers(selectedCareers.filter((cid) => cid !== id))}
-          onClear={() => setSelectedCareers([])}
-        />
       </div>
     </AppLayout>
   );

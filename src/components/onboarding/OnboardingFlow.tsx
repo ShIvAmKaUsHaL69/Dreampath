@@ -54,7 +54,7 @@ const skillOptions = [
 
 export function OnboardingFlow() {
   const router = useRouter();
-  const { onboardingData, setOnboardingData, setOnboardingComplete, setStudent } = useApp();
+  const { onboardingData, setOnboardingData, setOnboardingComplete, setStudent, setIsAuthenticated } = useApp();
   const [step, setStep] = useState(0); // 0-2 = intro screens, 3-7 = data collection
   const totalSteps = 8; // 3 intro + 5 data collection
   const introStepCount = 3;
@@ -77,25 +77,71 @@ export function OnboardingFlow() {
     setStep(introStepCount);
   };
 
-  const handleComplete = () => {
-    setStudent({
-      id: '1',
-      name: onboardingData.name,
-      email: onboardingData.email,
-      grade: onboardingData.grade,
-      stream: onboardingData.stream,
-      goalIntensity: onboardingData.goalIntensity,
-      interests: onboardingData.interests,
-      hobbies: onboardingData.hobbies,
-      skills: onboardingData.skills,
-      dreamCareers: [],
-      streak: 0,
-      totalPoints: 0,
-      badges: [],
-      createdAt: new Date(),
-    });
-    setOnboardingComplete(true);
-    router.push('/dashboard');
+  const handleComplete = async () => {
+    try {
+      // User already registered via signup — update their profile with onboarding data
+      const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      const userData = savedUser ? JSON.parse(savedUser) : {};
+
+      // Update profile with onboarding data
+      await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          name: onboardingData.name || userData.name,
+          email: onboardingData.email || userData.email,
+          password: userData.password || 'temp-already-registered',
+          grade: onboardingData.grade,
+          stream: onboardingData.stream,
+          goalIntensity: onboardingData.goalIntensity,
+          interests: onboardingData.interests,
+          hobbies: onboardingData.hobbies,
+          skills: onboardingData.skills,
+        }),
+      });
+
+      // Update local state
+      const updatedUser = {
+        ...userData,
+        name: onboardingData.name || userData.name,
+        grade: onboardingData.grade,
+        stream: onboardingData.stream,
+        goalIntensity: onboardingData.goalIntensity,
+        interests: onboardingData.interests,
+        hobbies: onboardingData.hobbies,
+        skills: onboardingData.skills,
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      setStudent({
+        id: String(updatedUser.id || '1'),
+        name: updatedUser.name,
+        email: updatedUser.email,
+        grade: updatedUser.grade,
+        stream: updatedUser.stream,
+        goalIntensity: updatedUser.goalIntensity,
+        interests: updatedUser.interests || [],
+        hobbies: updatedUser.hobbies || [],
+        skills: updatedUser.skills || [],
+        dreamCareers: [],
+        streak: 0,
+        totalPoints: 0,
+        badges: [],
+        createdAt: new Date(),
+      });
+      setOnboardingComplete(true);
+      setIsAuthenticated(true);
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Onboarding save error:', err);
+      // Still redirect even on error
+      setOnboardingComplete(true);
+      router.push('/dashboard');
+    }
   };
 
   const toggleArrayItem = (

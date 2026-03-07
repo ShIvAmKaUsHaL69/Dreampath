@@ -1,14 +1,27 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout';
 import { BadgeGrid } from '@/components/achievements';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useApp } from '@/contexts/AppContext';
-import { allBadges } from '@/data/mockData';
-import { Trophy, Flame, Star } from 'lucide-react';
+import { Badge as BadgeType } from '@/types';
+import { Trophy, Flame, Star, Loader2 } from 'lucide-react';
 
 export default function AchievementsPage() {
-  const { student } = useApp();
+  const { student, apiFetch } = useApp();
+  const [badges, setBadges] = useState<(BadgeType & { unlockedAt: Date | null })[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiFetch('/api/achievements')
+      .then(res => res.json())
+      .then(data => setBadges(data.badges || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [apiFetch]);
+
+  const earnedCount = badges.filter(b => b.unlockedAt).length;
 
   return (
     <AppLayout title="Achievements">
@@ -31,7 +44,7 @@ export default function AchievementsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {student?.badges.length || 0}/{allBadges.length}
+                {earnedCount}/{badges.length}
               </div>
             </CardContent>
           </Card>
@@ -55,7 +68,7 @@ export default function AchievementsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {student?.totalPoints.toLocaleString() || 0}
+                {student?.totalPoints?.toLocaleString() || 0}
               </div>
             </CardContent>
           </Card>
@@ -64,10 +77,16 @@ export default function AchievementsPage() {
         {/* Badges */}
         <div>
           <h3 className="text-xl font-semibold mb-4">Badges</h3>
-          <BadgeGrid
-            earnedBadges={student?.badges || []}
-            allBadges={allBadges}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <BadgeGrid
+              earnedBadges={student?.badges || []}
+              allBadges={badges}
+            />
+          )}
         </div>
       </div>
     </AppLayout>

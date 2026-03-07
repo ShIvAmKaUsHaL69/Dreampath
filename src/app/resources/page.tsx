@@ -1,24 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout';
 import { ResourceCard } from '@/components/resources';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockResources } from '@/data/mockData';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
+import { Resource } from '@/types';
 
 export default function ResourcesPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<string>('all');
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredResources = mockResources.filter((resource) => {
-    const matchesSearch =
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (filter !== 'all') params.set('type', filter);
+
+    fetch(`/api/resources?${params}`)
+      .then(res => res.json())
+      .then(data => setResources(data.resources || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [filter]);
+
+  const filteredResources = resources.filter(resource => {
+    if (!search) return true;
+    return (
       resource.title.toLowerCase().includes(search.toLowerCase()) ||
-      resource.description.toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filter === 'all' || resource.type === filter;
-    return matchesSearch && matchesFilter;
+      resource.description.toLowerCase().includes(search.toLowerCase())
+    );
   });
 
   return (
@@ -53,13 +65,19 @@ export default function ResourcesPage() {
         </div>
 
         {/* Resources Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredResources.map((resource) => (
-            <ResourceCard key={resource.id} resource={resource} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredResources.map((resource) => (
+              <ResourceCard key={resource.id} resource={resource} />
+            ))}
+          </div>
+        )}
 
-        {filteredResources.length === 0 && (
+        {!loading && filteredResources.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               No resources found matching your criteria.

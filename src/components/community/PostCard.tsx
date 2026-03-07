@@ -6,42 +6,60 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Post } from '@/types';
-import { Heart, MessageCircle, Share2, Send } from 'lucide-react';
+import { Post, Comment } from '@/types';
+import { Heart, MessageCircle, Share2, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useApp } from '@/contexts/AppContext';
 
 interface PostCardProps {
   post: Post;
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const { apiFetch } = useApp();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [comments, setComments] = useState(post.comments);
+  const [comments, setComments] = useState<Comment[]>(post.comments || []);
+  const [liking, setLiking] = useState(false);
+  const [commenting, setCommenting] = useState(false);
 
-  const handleLike = () => {
-    if (liked) {
-      setLikesCount(likesCount - 1);
-    } else {
-      setLikesCount(likesCount + 1);
+  const handleLike = async () => {
+    if (liking) return;
+    setLiking(true);
+    try {
+      const res = await apiFetch(`/api/community/posts/${post.id}/like`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setLiked(data.liked);
+        setLikesCount(data.likes);
+      }
+    } catch {
+      // Silent fail
+    } finally {
+      setLiking(false);
     }
-    setLiked(!liked);
   };
 
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    const comment = {
-      id: Date.now().toString(),
-      authorId: '1',
-      authorName: 'You',
-      authorAvatar: '',
-      content: newComment,
-      createdAt: new Date(),
-    };
-    setComments([...comments, comment]);
-    setNewComment('');
+  const handleAddComment = async () => {
+    if (!newComment.trim() || commenting) return;
+    setCommenting(true);
+    try {
+      const res = await apiFetch(`/api/community/posts/${post.id}/comments`, {
+        method: 'POST',
+        body: JSON.stringify({ content: newComment }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComments([...comments, data.comment]);
+        setNewComment('');
+      }
+    } catch {
+      // Silent fail
+    } finally {
+      setCommenting(false);
+    }
   };
 
   const timeAgo = (date: Date) => {
@@ -73,7 +91,7 @@ export function PostCard({ post }: PostCardProps) {
       </CardHeader>
       <CardContent className="pb-3">
         <p className="whitespace-pre-wrap">{post.content}</p>
-        {post.tags.length > 0 && (
+        {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-3">
             {post.tags.map((tag) => (
               <Badge key={tag} variant="secondary" className="text-xs">
@@ -88,22 +106,23 @@ export function PostCard({ post }: PostCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            className={cn('gap-2', liked && 'text-red-500')}
+            className={cn('gap-2 cursor-pointer', liked && 'text-red-500')}
             onClick={handleLike}
+            disabled={liking}
           >
-            <Heart className={cn('h-4 w-4', liked && 'fill-current')} />
+            {liking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className={cn('h-4 w-4', liked && 'fill-current')} />}
             {likesCount}
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2"
+            className="gap-2 cursor-pointer"
             onClick={() => setShowComments(!showComments)}
           >
             <MessageCircle className="h-4 w-4" />
             {comments.length}
           </Button>
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2 cursor-pointer">
             <Share2 className="h-4 w-4" />
             Share
           </Button>
@@ -135,10 +154,10 @@ export function PostCard({ post }: PostCardProps) {
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Write a comment..."
                 className="flex-1"
-                onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
               />
-              <Button size="icon" onClick={handleAddComment}>
-                <Send className="h-4 w-4" />
+              <Button size="icon" onClick={handleAddComment} disabled={commenting || !newComment.trim()} className="cursor-pointer">
+                {commenting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
           </div>

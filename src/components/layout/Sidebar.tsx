@@ -26,7 +26,7 @@ const mainNav = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { student, theme, toggleTheme } = useApp();
+  const { student, theme, toggleTheme, logout } = useApp();
 
   return (
     <div className="flex h-full w-60 flex-col border-r bg-sidebar">
@@ -96,7 +96,7 @@ export function Sidebar() {
             Settings
           </Button>
         </Link>
-        <Button variant="ghost" className="w-full justify-start gap-2.5 h-9 text-sm font-medium text-destructive hover:text-destructive cursor-pointer">
+        <Button variant="ghost" onClick={() => logout()} className="w-full justify-start gap-2.5 h-9 text-sm font-medium text-destructive hover:text-destructive cursor-pointer">
           <LogOut className="h-4 w-4" />
           Log out
         </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,11 +18,27 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { student, setStudent, theme, toggleTheme } = useApp();
+  const { student, setStudent, theme, toggleTheme, apiFetch, logout } = useApp();
   const { showToast } = useToast();
   const [name, setName] = useState(student?.name || '');
   const [email, setEmail] = useState(student?.email || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState({
+    dailyReminders: true,
+    missedTaskAlerts: true,
+    motivationNudges: true,
+    examCountdown: true,
+  });
+
+  // Load settings from API
+  useEffect(() => {
+    apiFetch('/api/settings')
+      .then(res => { if (res.ok) return res.json(); return null; })
+      .then(data => {
+        if (data?.notifications) setNotifPrefs(data.notifications);
+      })
+      .catch(() => {});
+  }, [apiFetch]);
 
   const profileFields = [
     student?.name, student?.email, student?.grade, student?.stream,
@@ -31,14 +47,37 @@ export default function SettingsPage() {
   const completedFields = profileFields.filter(Boolean).length;
   const profileCompletion = Math.round((completedFields / profileFields.length) * 100);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!student) return;
     setIsSaving(true);
-    setTimeout(() => {
-      setStudent({ ...student, name, email });
+    try {
+      const res = await apiFetch('/api/settings', {
+        method: 'PUT',
+        body: JSON.stringify({ name, email, notifications: notifPrefs }),
+      });
+      if (res.ok) {
+        setStudent({ ...student, name, email });
+        // Update localStorage
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          const user = JSON.parse(savedUser);
+          user.name = name;
+          user.email = email;
+          localStorage.setItem('user', JSON.stringify(user));
+        }
+        showToast('Settings saved successfully.', 'success');
+      } else {
+        showToast('Failed to save settings.', 'error');
+      }
+    } catch {
+      showToast('Failed to save settings.', 'error');
+    } finally {
       setIsSaving(false);
-      showToast('Profile updated.', 'success');
-    }, 500);
+    }
+  };
+
+  const toggleNotifPref = (key: keyof typeof notifPrefs) => {
+    setNotifPrefs(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
@@ -144,19 +183,19 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { title: 'Daily Task Reminders', desc: 'Get reminded about daily tasks' },
-              { title: 'Missed Task Alerts', desc: 'Notify when you miss a task' },
-              { title: 'Motivation Nudges', desc: 'Receive motivational messages' },
-              { title: 'Exam Countdown', desc: 'Notifications about upcoming exams' },
-            ].map((item, i) => (
-              <div key={item.title}>
+            {([
+              { key: 'dailyReminders' as const, title: 'Daily Task Reminders', desc: 'Get reminded about daily tasks' },
+              { key: 'missedTaskAlerts' as const, title: 'Missed Task Alerts', desc: 'Notify when you miss a task' },
+              { key: 'motivationNudges' as const, title: 'Motivation Nudges', desc: 'Receive motivational messages' },
+              { key: 'examCountdown' as const, title: 'Exam Countdown', desc: 'Notifications about upcoming exams' },
+            ]).map((item, i) => (
+              <div key={item.key}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">{item.title}</p>
                     <p className="text-xs text-muted-foreground">{item.desc}</p>
                   </div>
-                  <Switch defaultChecked className="cursor-pointer" />
+                  <Switch checked={notifPrefs[item.key]} onCheckedChange={() => toggleNotifPref(item.key)} className="cursor-pointer" />
                 </div>
                 {i < 3 && <Separator className="mt-4" />}
               </div>
@@ -190,10 +229,10 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" size="sm" className="w-full justify-start cursor-pointer">Change Password</Button>
-            <Button variant="outline" size="sm" className="w-full justify-start cursor-pointer">Export My Data</Button>
+            <Button variant="outline" size="sm" className="w-full justify-start cursor-pointer" onClick={() => showToast('Change password coming soon.', 'info')}>Change Password</Button>
+            <Button variant="outline" size="sm" className="w-full justify-start cursor-pointer" onClick={() => showToast('Export feature coming soon.', 'info')}>Export My Data</Button>
             <Separator />
-            <Button variant="destructive" size="sm" className="w-full justify-start gap-2 cursor-pointer">
+            <Button variant="destructive" size="sm" className="w-full justify-start gap-2 cursor-pointer" onClick={() => logout()}>
               <LogOut className="h-3.5 w-3.5" /> Logout
             </Button>
           </CardContent>

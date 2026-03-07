@@ -1,12 +1,19 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Flame, Target, TrendingUp, Clock } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { mockAnalytics } from '@/data/mockData';
 
 export function StatsCards() {
-  const { student, tasks, currentRoadmap } = useApp();
+  const { student, tasks, currentRoadmap, apiFetch } = useApp();
+  const [weeklyConsistency, setWeeklyConsistency] = useState(0);
+
+  useEffect(() => {
+    apiFetch('/api/analytics').then(res => {
+      if (res.ok) res.json().then(data => setWeeklyConsistency(data.analytics.weeklyConsistency || 0));
+    }).catch(() => {});
+  }, [apiFetch]);
 
   const completedToday = tasks.filter(
     t => t.completed && t.completedAt &&
@@ -20,7 +27,7 @@ export function StatsCards() {
   const stats = [
     { label: 'Streak', value: `${student?.streak || 0}d`, icon: Flame },
     { label: 'Tasks today', value: `${completedToday}/${totalToday}`, icon: Target },
-    { label: 'Weekly consistency', value: `${mockAnalytics.weeklyConsistency}%`, icon: TrendingUp },
+    { label: 'Weekly consistency', value: `${weeklyConsistency}%`, icon: TrendingUp },
     { label: 'Roadmap', value: `${currentRoadmap?.progress || 0}%`, icon: Clock },
   ];
 

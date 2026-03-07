@@ -5,10 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Task } from '@/types';
 import { cn } from '@/lib/utils';
-import { Calendar, Filter, Plus } from 'lucide-react';
+import { useApp } from '@/contexts/AppContext';
+import { useToast } from '@/components/ui/Toaster';
+import { Calendar, Filter, Plus, X, Loader2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,8 +33,19 @@ const priorityDot: Record<string, string> = {
 };
 
 export function TaskList({ tasks, onToggle }: TaskListProps) {
+  const { apiFetch, fetchTasks } = useApp();
+  const { showToast } = useToast();
   const [filter, setFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  // New task form
+  const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newCategory, setNewCategory] = useState('study');
+  const [newPriority, setNewPriority] = useState('medium');
+  const [newDueDate, setNewDueDate] = useState(new Date().toISOString().split('T')[0]);
 
   const today = new Date().toDateString();
   const tomorrow = new Date(Date.now() + 86400000).toDateString();
@@ -46,6 +62,39 @@ export function TaskList({ tasks, onToggle }: TaskListProps) {
   const upcomingTasks = filteredTasks.filter(
     (t) => new Date(t.dueDate).toDateString() !== today && new Date(t.dueDate).toDateString() !== tomorrow
   );
+
+  const handleCreateTask = async () => {
+    if (!newTitle.trim()) return;
+    setCreating(true);
+    try {
+      const res = await apiFetch('/api/tasks', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: newTitle.trim(),
+          description: newDescription.trim() || null,
+          category: newCategory,
+          priority: newPriority,
+          dueDate: newDueDate || null,
+        }),
+      });
+      if (res.ok) {
+        showToast('Task created!', 'success');
+        setNewTitle('');
+        setNewDescription('');
+        setNewCategory('study');
+        setNewPriority('medium');
+        setNewDueDate(new Date().toISOString().split('T')[0]);
+        setShowAddForm(false);
+        await fetchTasks();
+      } else {
+        showToast('Failed to create task', 'error');
+      }
+    } catch {
+      showToast('Failed to create task', 'error');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const TaskItem = ({ task }: { task: Task }) => (
     <div
@@ -124,12 +173,96 @@ export function TaskList({ tasks, onToggle }: TaskListProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button size="sm" className="gap-1.5 h-8 text-xs cursor-pointer">
-            <Plus className="h-3 w-3" />
-            Add Task
+          <Button
+            size="sm"
+            className="gap-1.5 h-8 text-xs cursor-pointer"
+            onClick={() => setShowAddForm(!showAddForm)}
+          >
+            {showAddForm ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+            {showAddForm ? 'Cancel' : 'Add Task'}
           </Button>
         </div>
       </div>
+
+      {/* Add Task Form */}
+      {showAddForm && (
+        <Card className="border-primary/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold">New Task</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Title *</Label>
+              <Input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="e.g., Study Chapter 5 Physics"
+                className="h-9"
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateTask()}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Description</Label>
+              <Textarea
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Optional details..."
+                className="min-h-[60px] resize-none"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Category</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start h-9 text-xs capitalize cursor-pointer">
+                      {newCategory}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {['study', 'skill', 'research', 'self-improvement'].map((cat) => (
+                      <DropdownMenuItem key={cat} onClick={() => setNewCategory(cat)} className="cursor-pointer capitalize">
+                        {cat}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Priority</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-full justify-start h-9 text-xs capitalize cursor-pointer">
+                      <div className={cn('h-1.5 w-1.5 rounded-full mr-1.5', priorityDot[newPriority])} />
+                      {newPriority}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {['low', 'medium', 'high'].map((p) => (
+                      <DropdownMenuItem key={p} onClick={() => setNewPriority(p)} className="cursor-pointer capitalize">
+                        <div className={cn('h-1.5 w-1.5 rounded-full mr-2', priorityDot[p])} />
+                        {p}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Due Date</Label>
+                <Input
+                  type="date"
+                  value={newDueDate}
+                  onChange={(e) => setNewDueDate(e.target.value)}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+            <Button onClick={handleCreateTask} disabled={creating || !newTitle.trim()} className="w-full cursor-pointer">
+              {creating ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Creating...</> : 'Create Task'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sections */}
       {todayTasks.length > 0 && (
@@ -145,7 +278,9 @@ export function TaskList({ tasks, onToggle }: TaskListProps) {
       {filteredTasks.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">No tasks found.</p>
+            <p className="text-sm text-muted-foreground">
+              {tasks.length === 0 ? 'No tasks yet. Add a task or explore careers to get started!' : 'No tasks found.'}
+            </p>
           </CardContent>
         </Card>
       )}

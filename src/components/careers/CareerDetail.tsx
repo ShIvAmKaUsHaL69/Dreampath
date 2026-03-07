@@ -1,24 +1,18 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Career } from '@/types';
+import { useApp } from '@/contexts/AppContext';
+import { useToast } from '@/components/ui/Toaster';
+import { useRouter } from 'next/navigation';
 import {
-  Briefcase,
-  GraduationCap,
-  BookOpen,
-  Building2,
-  AlertTriangle,
-  TrendingUp,
-  Clock,
-  DollarSign,
-  Heart,
-  Target,
-  ArrowLeft,
-  Plus,
+  Briefcase, GraduationCap, BookOpen, Building2, AlertTriangle,
+  TrendingUp, Clock, DollarSign, Heart, Target, ArrowLeft, Plus, Loader2, Check,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,18 +23,137 @@ const levelColors: Record<string, string> = {
   'very-high': 'bg-red-100 text-red-700',
 };
 
+// Predefined starter tasks for each career category
+function generateStarterTasks(career: Career): { title: string; description: string; category: string; priority: string }[] {
+  const tasks = [
+    {
+      title: `Research about ${career.title}`,
+      description: `Learn about what a ${career.title} does daily, career growth, and salary prospects.`,
+      category: 'research',
+      priority: 'high',
+    },
+    {
+      title: `Understand academic path for ${career.title}`,
+      description: `Study the required degrees, entrance exams (${career.entranceExams.slice(0, 2).join(', ')}), and college options.`,
+      category: 'study',
+      priority: 'high',
+    },
+    {
+      title: `Assess your skills for ${career.title}`,
+      description: `Review the skills needed: ${career.skillsRequired.slice(0, 3).join(', ')}. Identify gaps.`,
+      category: 'self-improvement',
+      priority: 'medium',
+    },
+    {
+      title: `Create a study plan for entrance exams`,
+      description: `Plan your preparation schedule for ${career.entranceExams.join(', ')}.`,
+      category: 'study',
+      priority: 'high',
+    },
+    {
+      title: `Talk to a ${career.title} professional`,
+      description: `Find and connect with someone working as a ${career.title} to learn from their experience.`,
+      category: 'research',
+      priority: 'medium',
+    },
+    {
+      title: `Practice ${career.skillsRequired[0] || 'core skills'}`,
+      description: `Start building the most important skill: ${career.skillsRequired[0] || 'problem solving'}.`,
+      category: 'skill',
+      priority: 'medium',
+    },
+  ];
+  return tasks;
+}
+
 interface CareerDetailProps {
   career: Career;
 }
 
 export function CareerDetail({ career }: CareerDetailProps) {
+  const { apiFetch, fetchTasks } = useApp();
+  const { showToast } = useToast();
+  const router = useRouter();
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  const handleAddToGoals = async () => {
+    if (adding || added) return;
+    setAdding(true);
+    try {
+      // 1. Create roadmap
+      const today = new Date();
+      const endDate = new Date(today);
+      endDate.setFullYear(endDate.getFullYear() + 1);
+
+      const roadmapRes = await apiFetch('/api/roadmaps', {
+        method: 'POST',
+        body: JSON.stringify({
+          careerId: career.id,
+          title: `${career.title} Career Path`,
+          description: `Roadmap to become a ${career.title}`,
+          startDate: today.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          milestones: [
+            { title: 'Research & Exploration', description: 'Understand the career path', dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0] },
+            { title: 'Skill Assessment', description: 'Identify and start building required skills', dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] },
+            { title: 'Exam Preparation', description: 'Begin entrance exam preparation', dueDate: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0] },
+          ],
+        }),
+      });
+
+      if (!roadmapRes.ok) {
+        const err = await roadmapRes.json();
+        throw new Error(err.error || 'Failed to create roadmap');
+      }
+
+      // 2. Fetch admin-defined predefined tasks, fallback to auto-generated
+      let starterTasks: { title: string; description: string; category: string; priority: string }[] = [];
+      try {
+        const dtRes = await apiFetch(`/api/careers/${career.id}/default-tasks`);
+        if (dtRes.ok) {
+          const dtData = await dtRes.json();
+          if (dtData.tasks?.length > 0) {
+            starterTasks = dtData.tasks.map((t: any) => ({ title: t.title, description: t.description || '', category: t.category, priority: t.priority }));
+          }
+        }
+      } catch {}
+      if (starterTasks.length === 0) {
+        starterTasks = generateStarterTasks(career);
+      }
+      for (const task of starterTasks) {
+        const dueDate = new Date(Date.now() + Math.floor(Math.random() * 7 + 1) * 86400000);
+        await apiFetch('/api/tasks', {
+          method: 'POST',
+          body: JSON.stringify({
+            ...task,
+            dueDate: dueDate.toISOString().split('T')[0],
+          }),
+        });
+      }
+
+      // 3. Refresh tasks in context
+      if (fetchTasks) await fetchTasks();
+
+      setAdded(true);
+      showToast(`${career.title} added to your goals! ${starterTasks.length} starter tasks created.`, 'success');
+
+      // Navigate to roadmap after a short delay
+      setTimeout(() => router.push('/roadmap'), 1500);
+    } catch (error: any) {
+      showToast(error.message || 'Failed to add career to goals', 'error');
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <Link href="/careers">
-            <Button variant="ghost" size="sm" className="mb-2 -ml-2 gap-1">
+            <Button variant="ghost" size="sm" className="mb-2 -ml-2 gap-1 cursor-pointer">
               <ArrowLeft className="h-4 w-4" />
               Back to Careers
             </Button>
@@ -53,9 +166,18 @@ export function CareerDetail({ career }: CareerDetailProps) {
           </div>
           <p className="mt-2 text-muted-foreground max-w-2xl">{career.description}</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add to My Goals
+        <Button
+          className="gap-2 cursor-pointer"
+          onClick={handleAddToGoals}
+          disabled={adding || added}
+        >
+          {adding ? (
+            <><Loader2 className="h-4 w-4 animate-spin" /> Adding...</>
+          ) : added ? (
+            <><Check className="h-4 w-4" /> Added to Goals</>
+          ) : (
+            <><Plus className="h-4 w-4" /> Add to My Goals</>
+          )}
         </Button>
       </div>
 

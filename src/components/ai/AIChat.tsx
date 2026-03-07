@@ -19,123 +19,7 @@ const suggestedQuestions = [
   'How to improve my time management?',
 ];
 
-// Simulated AI responses
-const getAIResponse = (question: string): string => {
-  const lowerQ = question.toLowerCase();
-  
-  if (lowerQ.includes('software') && lowerQ.includes('skill')) {
-    return `Great question! For software engineering, you'll need these key skills:
 
-**Technical Skills:**
-- Programming languages (Python, Java, JavaScript)
-- Data Structures & Algorithms
-- Database management
-- Version control (Git)
-- Problem-solving
-
-**Soft Skills:**
-- Communication
-- Teamwork
-- Time management
-- Continuous learning mindset
-
-I recommend starting with Python for beginners and gradually moving to other languages. Practice coding daily on platforms like HackerRank or LeetCode!`;
-  }
-  
-  if (lowerQ.includes('jee')) {
-    return `Here's your JEE Main preparation strategy:
-
-**Phase 1 (Foundation):**
-- Complete NCERT thoroughly for all subjects
-- Understand concepts deeply, don't just memorize
-
-**Phase 2 (Practice):**
-- Solve previous year papers (last 10 years)
-- Take mock tests regularly
-- Focus on weak areas
-
-**Subject-wise Tips:**
-- **Physics:** Focus on concepts and numericals
-- **Chemistry:** Balance between organic, inorganic, and physical
-- **Mathematics:** Practice is key - solve daily
-
-Would you like a detailed study timetable?`;
-  }
-  
-  if (lowerQ.includes('compare') || lowerQ.includes('vs')) {
-    return `Here's a comparison between Data Science and Software Engineering:
-
-| Aspect | Data Science | Software Engineering |
-|--------|--------------|---------------------|
-| Focus | Data analysis & insights | Building applications |
-| Skills | Statistics, ML, Python | Programming, system design |
-| Math Required | High (statistics) | Moderate |
-| Job Market | Growing rapidly | Always in demand |
-| Salary | ₹8-40 LPA | ₹6-25 LPA |
-
-**Choose Data Science if:** You love math, statistics, and finding patterns in data.
-
-**Choose Software Engineering if:** You enjoy building products, solving logical problems, and creating applications.
-
-Both are excellent choices with great career prospects!`;
-  }
-  
-  if (lowerQ.includes('backup') || lowerQ.includes('alternative')) {
-    return `Smart thinking about backup options! Here are alternatives for common career paths:
-
-**Medicine:**
-- Pharmacist
-- Medical Lab Technician
-- Healthcare Administrator
-- Biomedical Engineer
-
-**Engineering:**
-- Data Analyst
-- Technical Writer
-- IT Support
-- Project Manager
-
-**Law:**
-- Legal Advisor (corporate)
-- Compliance Officer
-- Paralegal
-- Legal Writer
-
-Having backup options is wise planning, not giving up. It shows maturity in your career planning!`;
-  }
-  
-  if (lowerQ.includes('time management')) {
-    return `Here are proven time management strategies:
-
-**1. The Pomodoro Technique:**
-- Study for 25 minutes
-- Take 5-minute breaks
-- After 4 sessions, take a longer break
-
-**2. Priority Matrix:**
-- Urgent + Important: Do first
-- Important but not urgent: Schedule
-- Urgent but not important: Delegate
-- Neither: Eliminate
-
-**3. Daily Planning:**
-- Plan your day the night before
-- Set 3 main goals for each day
-- Review progress weekly
-
-**Pro tip:** Start with your most difficult task when your energy is highest!`;
-  }
-  
-  return `Thanks for your question! Let me help you with that.
-
-Based on your query, here are some key points to consider:
-
-1. **Research thoroughly:** Understand all aspects of your question
-2. **Take action:** Small consistent steps lead to big results
-3. **Stay focused:** Keep your goals in mind
-
-Would you like me to explain anything specific in more detail? Feel free to ask follow-up questions!`;
-};
 
 export function AIChat() {
   const { chatMessages, addChatMessage, clearChat } = useApp();
@@ -160,20 +44,99 @@ export function AIChat() {
     };
 
     addChatMessage(userMessage);
+    const messageText = input;
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI thinking
-    setTimeout(() => {
-      const aiResponse: ChatMessage = {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message: messageText }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        addChatMessage({
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: err.error || 'Sorry, I had trouble processing your request. Please try again.',
+          timestamp: new Date(),
+        });
+        setIsTyping(false);
+        return;
+      }
+
+      // Check if streaming response
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('text/event-stream')) {
+        // Stream response
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let fullContent = '';
+        const assistantMsgId = (Date.now() + 1).toString();
+
+        // Add empty assistant message that we'll update
+        addChatMessage({
+          id: assistantMsgId,
+          role: 'assistant',
+          content: '',
+          timestamp: new Date(),
+        });
+
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') continue;
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.content) {
+                  fullContent += parsed.content;
+                  // Update the last message in chat
+                  addChatMessage({
+                    id: assistantMsgId,
+                    role: 'assistant',
+                    content: fullContent,
+                    timestamp: new Date(),
+                  });
+                }
+              } catch { /* skip */ }
+            }
+          }
+        }
+      } else {
+        // Non-streaming response (fallback)
+        const data = await res.json();
+        addChatMessage({
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.response || 'I received your message but could not generate a response.',
+          timestamp: new Date(),
+        });
+      }
+    } catch (error) {
+      addChatMessage({
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: getAIResponse(input),
+        content: 'Sorry, there was a connection error. Please check your internet and try again.',
         timestamp: new Date(),
-      };
-      addChatMessage(aiResponse);
+      });
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleSuggestedQuestion = (question: string) => {
