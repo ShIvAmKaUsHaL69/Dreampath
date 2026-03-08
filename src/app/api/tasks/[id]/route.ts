@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/auth';
-import { queryOne, update } from '@/lib/db';
+import { queryOne, update, query } from '@/lib/db';
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,8 +12,41 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const { title, description, category, priority, dueDate, completed } = body;
 
     // Check ownership
-    const task = await queryOne<any>('SELECT id FROM tasks WHERE id = ? AND user_id = ?', [id, authResult.userId]);
+    const task = await queryOne<any>('SELECT id, milestone_id FROM tasks WHERE id = ? AND user_id = ?', [id, authResult.userId]);
     if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+
+    // Server-side quiz gate check: if marking complete and task belongs to a milestone,
+    // verify no preceding milestone with an unpassed quiz blocks this task
+    if (completed && task.milestone_id) {
+      const milestone = await queryOne<any>(
+        'SELECT id, roadmap_id, sort_order FROM milestones WHERE id = ?',
+        [task.milestone_id]
+      );
+      if (milestone) {
+        // Find all milestones before this one that have a quiz (item_id set)
+        const priorMilestones = await query<any[]>(
+          `SELECT m.id, m.item_id, m.sort_order
+           FROM milestones m
+           WHERE m.roadmap_id = ? AND m.sort_order < ? AND m.item_id IS NOT NULL
+           ORDER BY m.sort_order`,
+          [milestone.roadmap_id, milestone.sort_order]
+        );
+
+        for (const pm of priorMilestones) {
+          // Check if user has a passing attempt for this milestone's quiz
+          const passedAttempt = await queryOne<any>(
+            'SELECT id FROM quiz_attempts WHERE user_id = ? AND item_id = ? AND passed = 1',
+            [authResult.userId, pm.item_id]
+          );
+          if (!passedAttempt) {
+            return NextResponse.json(
+              { error: 'You must pass a preceding milestone quiz before completing this task.' },
+              { status: 403 }
+            );
+          }
+        }
+      }
+    }
 
     const sets: string[] = [];
     const vals: any[] = [];

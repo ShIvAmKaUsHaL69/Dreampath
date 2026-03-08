@@ -151,7 +151,7 @@ export function AIChat() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
               <Bot className="h-5 w-5 text-primary" />
             </div>
-            DreamPath AI Assistant
+            DreamRoute AI Assistant
           </CardTitle>
           {chatMessages.length > 0 && (
             <Button variant="ghost" size="sm" onClick={clearChat} className="gap-1">

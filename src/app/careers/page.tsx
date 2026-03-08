@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout';
 import { CareerCard, CareerComparison } from '@/components/careers';
@@ -17,7 +17,7 @@ import {
 const streamOptions = ['All Streams', 'Science', 'Commerce', 'Arts'] as const;
 const difficultyOptions = ['All Levels', 'Low', 'Medium', 'High', 'Very High'] as const;
 
-export default function CareersPage() {
+function CareersContent() {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -248,5 +248,19 @@ export default function CareersPage() {
         )}
       </div>
     </AppLayout>
+  );
+}
+
+export default function CareersPage() {
+  return (
+    <Suspense fallback={
+      <AppLayout title="Careers">
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    }>
+      <CareersContent />
+    </Suspense>
   );
 }

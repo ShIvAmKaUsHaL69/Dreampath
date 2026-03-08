@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/dashboard';
@@ -62,7 +62,7 @@ export default function LoginPage() {
         <div className="relative z-10 max-w-md px-8 text-center">
           <div className="flex items-center justify-center gap-3 mb-8">
             <span className="h-12 w-12 rounded-xl bg-primary text-primary-foreground grid place-items-center text-xl font-extrabold">D</span>
-            <span className="font-bold tracking-tight text-3xl">DreamPath</span>
+            <span className="font-bold tracking-tight text-3xl">DreamRoute</span>
           </div>
           <h2 className="text-2xl font-semibold mb-4">Your career journey starts here</h2>
           <p className="text-muted-foreground text-lg leading-relaxed">
@@ -76,7 +76,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <span className="h-8 w-8 rounded-md bg-primary text-primary-foreground grid place-items-center text-sm font-extrabold">D</span>
-            <span className="font-bold tracking-tight text-lg">DreamPath</span>
+            <span className="font-bold tracking-tight text-lg">DreamRoute</span>
           </div>
 
           <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
@@ -153,5 +153,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginFormContent />
+    </Suspense>
   );
 }

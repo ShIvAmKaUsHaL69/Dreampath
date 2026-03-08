@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/Toaster';
 import { useRouter } from 'next/navigation';
 import {
   Briefcase, GraduationCap, BookOpen, Building2, AlertTriangle,
-  TrendingUp, Clock, DollarSign, Heart, Target, ArrowLeft, Plus, Loader2, Check,
+  TrendingUp, Clock, DollarSign, Heart, Target, ArrowLeft, Plus, Loader2, Check, Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -71,21 +71,156 @@ interface CareerDetailProps {
 }
 
 export function CareerDetail({ career }: CareerDetailProps) {
-  const { apiFetch, fetchTasks } = useApp();
+  const { apiFetch, fetchTasks, isAuthenticated } = useApp();
   const { showToast } = useToast();
   const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [existingRoadmapId, setExistingRoadmapId] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  // Check if user already has this career in their goals
+  useEffect(() => {
+    if (!isAuthenticated) { setChecking(false); return; }
+    (async () => {
+      try {
+        const res = await apiFetch('/api/roadmaps');
+        if (res.ok) {
+          const data = await res.json();
+          const match = data.roadmaps?.find((r: any) => {
+            const cId = String(career.id);
+            return r.careerId === cId || String(r.careerId) === cId;
+          });
+          if (match) { setExistingRoadmapId(match.id); setAdded(true); }
+        }
+      } catch {} finally { setChecking(false); }
+    })();
+  }, [apiFetch, career.id, isAuthenticated]);
+
+  const handleRemoveFromGoals = async () => {
+    if (!existingRoadmapId || removing) return;
+    if (!confirm('Remove this career from your goals? This will delete your roadmap and progress.')) return;
+    setRemoving(true);
+    try {
+      const res = await apiFetch(`/api/roadmaps/${existingRoadmapId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setAdded(false); setExistingRoadmapId(null);
+        showToast('Career removed from your goals', 'success');
+        if (fetchTasks) await fetchTasks();
+      }
+    } catch { showToast('Failed to remove', 'error'); }
+    finally { setRemoving(false); }
+  };
 
   const handleAddToGoals = async () => {
     if (adding || added) return;
     setAdding(true);
     try {
-      // 1. Create roadmap
+      // 1. Fetch admin-defined roadmap items (sorted by sort_order)
+      let roadmapItems: any[] = [];
+      try {
+        const dtRes = await apiFetch(`/api/careers/${career.id}/default-tasks`);
+        if (dtRes.ok) {
+          const dtData = await dtRes.json();
+          if (dtData.tasks?.length > 0) roadmapItems = dtData.tasks;
+        }
+      } catch {}
+
+      // 2. Group items into milestone segments
+      // Walk the sorted list: accumulate tasks, and when a milestone appears,
+      // push a milestone with the accumulated tasks as its children.
+      // Items BEFORE a milestone belong to THAT milestone.
+      interface MilestonePayload {
+        title: string; description: string; dueDate: string;
+        itemId?: number;
+        tasks: { title: string; description: string; category: string; priority: string; dueDate: string }[];
+      }
+
+      const milestones: MilestonePayload[] = [];
+      let pendingTasks: { title: string; description: string; category: string; priority: string; daysOffset: number }[] = [];
+
       const today = new Date();
+      const todayMs = today.getTime();
       const endDate = new Date(today);
       endDate.setFullYear(endDate.getFullYear() + 1);
 
+      let milestoneIndex = 0;
+
+      for (const item of roadmapItems) {
+        if (item.type === 'milestone') {
+          // Compute task due dates from days_offset (today + days)
+          const tasksWithDates = pendingTasks.map(t => ({
+            title: t.title,
+            description: t.description,
+            category: t.category,
+            priority: t.priority,
+            dueDate: new Date(todayMs + (t.daysOffset || (milestoneIndex + 1) * 7) * 86400000).toISOString().split('T')[0],
+          }));
+          // Milestone due date = max of its tasks' due dates, or fallback
+          const maxTaskDate = tasksWithDates.length > 0
+            ? tasksWithDates.reduce((max, t) => t.dueDate > max ? t.dueDate : max, tasksWithDates[0].dueDate)
+            : new Date(todayMs + (milestoneIndex + 1) * 30 * 86400000).toISOString().split('T')[0];
+          milestones.push({
+            title: item.title,
+            description: item.description || '',
+            dueDate: maxTaskDate,
+            itemId: item.id,
+            tasks: tasksWithDates,
+          });
+          pendingTasks = [];
+          milestoneIndex++;
+        } else {
+          // task item — accumulate it with its days_offset
+          pendingTasks.push({
+            title: item.title,
+            description: item.description || '',
+            category: item.category || 'study',
+            priority: item.priority || 'medium',
+            daysOffset: item.days_offset || 0,
+          });
+        }
+      }
+
+      // If there are trailing tasks after the last milestone (or no milestones at all),
+      // put them in a final milestone
+      if (pendingTasks.length > 0) {
+        const tasksWithDates = pendingTasks.map(t => ({
+          title: t.title, description: t.description, category: t.category, priority: t.priority,
+          dueDate: new Date(todayMs + (t.daysOffset || (milestoneIndex + 1) * 7) * 86400000).toISOString().split('T')[0],
+        }));
+        const maxDate = tasksWithDates.reduce((max, t) => t.dueDate > max ? t.dueDate : max, tasksWithDates[0].dueDate);
+        milestones.push({
+          title: milestones.length > 0 ? 'Final Steps' : 'Getting Started',
+          description: milestones.length > 0 ? 'Complete these remaining tasks' : 'Begin your career journey',
+          dueDate: maxDate,
+          tasks: tasksWithDates,
+        });
+      }
+
+      // Fallback if no items at all
+      if (milestones.length === 0) {
+        const starterTasks = generateStarterTasks(career);
+        milestones.push(
+          {
+            title: 'Research & Exploration', description: 'Understand the career path',
+            dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+            tasks: starterTasks.slice(0, 2).map(t => ({ ...t, dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0] })),
+          },
+          {
+            title: 'Skill Assessment', description: 'Identify and start building required skills',
+            dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+            tasks: starterTasks.slice(2, 4).map(t => ({ ...t, dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] })),
+          },
+          {
+            title: 'Exam Preparation', description: 'Begin entrance exam preparation',
+            dueDate: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
+            tasks: starterTasks.slice(4).map(t => ({ ...t, dueDate: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0] })),
+          },
+        );
+      }
+
+      // 3. Create roadmap with milestones + embedded tasks
       const roadmapRes = await apiFetch('/api/roadmaps', {
         method: 'POST',
         body: JSON.stringify({
@@ -94,11 +229,7 @@ export function CareerDetail({ career }: CareerDetailProps) {
           description: `Roadmap to become a ${career.title}`,
           startDate: today.toISOString().split('T')[0],
           endDate: endDate.toISOString().split('T')[0],
-          milestones: [
-            { title: 'Research & Exploration', description: 'Understand the career path', dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0] },
-            { title: 'Skill Assessment', description: 'Identify and start building required skills', dueDate: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] },
-            { title: 'Exam Preparation', description: 'Begin entrance exam preparation', dueDate: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0] },
-          ],
+          milestones,
         }),
       });
 
@@ -107,38 +238,11 @@ export function CareerDetail({ career }: CareerDetailProps) {
         throw new Error(err.error || 'Failed to create roadmap');
       }
 
-      // 2. Fetch admin-defined predefined tasks, fallback to auto-generated
-      let starterTasks: { title: string; description: string; category: string; priority: string }[] = [];
-      try {
-        const dtRes = await apiFetch(`/api/careers/${career.id}/default-tasks`);
-        if (dtRes.ok) {
-          const dtData = await dtRes.json();
-          if (dtData.tasks?.length > 0) {
-            starterTasks = dtData.tasks.map((t: any) => ({ title: t.title, description: t.description || '', category: t.category, priority: t.priority }));
-          }
-        }
-      } catch {}
-      if (starterTasks.length === 0) {
-        starterTasks = generateStarterTasks(career);
-      }
-      for (const task of starterTasks) {
-        const dueDate = new Date(Date.now() + Math.floor(Math.random() * 7 + 1) * 86400000);
-        await apiFetch('/api/tasks', {
-          method: 'POST',
-          body: JSON.stringify({
-            ...task,
-            dueDate: dueDate.toISOString().split('T')[0],
-          }),
-        });
-      }
+      const totalTasks = milestones.reduce((sum, m) => sum + m.tasks.length, 0);
 
-      // 3. Refresh tasks in context
       if (fetchTasks) await fetchTasks();
-
       setAdded(true);
-      showToast(`${career.title} added to your goals! ${starterTasks.length} starter tasks created.`, 'success');
-
-      // Navigate to roadmap after a short delay
+      showToast(`${career.title} added to your goals! ${totalTasks} tasks created across ${milestones.length} milestones.`, 'success');
       setTimeout(() => router.push('/roadmap'), 1500);
     } catch (error: any) {
       showToast(error.message || 'Failed to add career to goals', 'error');
@@ -166,19 +270,25 @@ export function CareerDetail({ career }: CareerDetailProps) {
           </div>
           <p className="mt-2 text-muted-foreground max-w-2xl">{career.description}</p>
         </div>
-        <Button
-          className="gap-2 cursor-pointer"
-          onClick={handleAddToGoals}
-          disabled={adding || added}
-        >
-          {adding ? (
-            <><Loader2 className="h-4 w-4 animate-spin" /> Adding...</>
-          ) : added ? (
-            <><Check className="h-4 w-4" /> Added to Goals</>
-          ) : (
-            <><Plus className="h-4 w-4" /> Add to My Goals</>
-          )}
-        </Button>
+        {checking ? (
+          <Button disabled className="gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Checking...</Button>
+        ) : added ? (
+          <div className="flex flex-col items-end gap-2">
+            <Badge variant="default" className="gap-1 px-3 py-1.5"><Check className="h-3 w-3" /> In My Goals</Badge>
+            <Button variant="outline" size="sm" onClick={handleRemoveFromGoals} disabled={removing} className="gap-2 cursor-pointer text-destructive hover:text-destructive">
+              {removing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+              Remove from Goals
+            </Button>
+          </div>
+        ) : (
+          <Button className="gap-2 cursor-pointer" onClick={handleAddToGoals} disabled={adding}>
+            {adding ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Adding...</>
+            ) : (
+              <><Plus className="h-4 w-4" /> Add to My Goals</>
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Quick Stats */}

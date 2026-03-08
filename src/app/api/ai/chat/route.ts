@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const skills = await query<any[]>('SELECT name FROM user_skills WHERE user_id = ?', [authResult.userId]);
 
     const user = userInfo[0] || {};
-    const systemPrompt = `You are DreamPath AI Assistant, a friendly and knowledgeable career guidance counselor for Indian students in Class 8-12. 
+    const systemPrompt = `You are DreamRoute AI Assistant, a friendly and knowledgeable career guidance counselor for Indian students in Class 8-12. 
 The student's name is ${user.name || 'Student'}, they are in Class ${user.grade || '10'}, stream: ${user.stream || 'undecided'}, goal intensity: ${user.goal_intensity || 'serious'}.
 Their interests: ${interests.map((i: any) => i.name).join(', ') || 'not specified'}.
 Their skills: ${skills.map((s: any) => s.name).join(', ') || 'not specified'}.

@@ -1,30 +1,72 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout';
-import { RoadmapOverview, RoadmapTimeline } from '@/components/roadmap';
+import { RoadmapTimeline } from '@/components/roadmap';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Plus, Compass, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Roadmap } from '@/types';
+import { cn } from '@/lib/utils';
 
 export default function RoadmapPage() {
   const { apiFetch, isAuthenticated } = useApp();
   const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [quizAttempts, setQuizAttempts] = useState<Record<string, { passed: boolean; score: number }>>({});
+  const [milestoneItemIds, setMilestoneItemIds] = useState<Record<string, number>>({});
+
+  const fetchRoadmaps = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const res = await apiFetch('/api/roadmaps');
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.roadmaps) setRoadmaps(data.roadmaps);
+      }
+    } catch {}
+    finally { setLoading(false); }
+  }, [apiFetch, isAuthenticated]);
+
+  useEffect(() => { fetchRoadmaps(); }, [fetchRoadmaps]);
+
+  // Fetch quiz attempts and milestone item IDs for the selected roadmap
+  const currentRoadmap = roadmaps[selectedIndex];
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    apiFetch('/api/roadmaps')
-      .then(res => { if (res.ok) return res.json(); return null; })
-      .then(data => {
-        if (data?.roadmaps) setRoadmaps(data.roadmaps);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [apiFetch, isAuthenticated]);
+    if (!currentRoadmap || !isAuthenticated) return;
+    // Fetch quiz attempts
+    (async () => {
+      try {
+        const res = await apiFetch(`/api/quiz/attempt?roadmapId=${currentRoadmap.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          const attemptsMap: Record<string, { passed: boolean; score: number }> = {};
+          for (const a of (data.attempts || [])) {
+            const key = String(a.item_id);
+            // Keep best attempt
+            if (!attemptsMap[key] || (a.passed && !attemptsMap[key].passed) || a.score > attemptsMap[key].score) {
+              attemptsMap[key] = { passed: !!a.passed, score: a.score };
+            }
+          }
+          setQuizAttempts(attemptsMap);
+        }
+      } catch {}
+    })();
+
+    // Build milestoneItemIds from the milestones' itemId field (no extra fetch needed)
+    const mapping: Record<string, number> = {};
+    for (const m of (currentRoadmap.milestones || [])) {
+      if ((m as any).itemId) {
+        mapping[m.id] = (m as any).itemId;
+      }
+    }
+    setMilestoneItemIds(mapping);
+  }, [apiFetch, currentRoadmap, isAuthenticated]);
 
   if (loading) {
     return (
@@ -58,11 +100,35 @@ export default function RoadmapPage() {
     );
   }
 
-  const currentRoadmap = roadmaps[0]; // Show the most recent roadmap
-
   return (
     <AppLayout title="My Roadmap">
       <div className="space-y-6">
+        {/* Career Selector — show all roadmaps as selectable cards */}
+        {roadmaps.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {roadmaps.map((rm, i) => (
+              <button
+                key={rm.id}
+                onClick={() => setSelectedIndex(i)}
+                className={cn(
+                  'flex-shrink-0 rounded-lg border px-4 py-2.5 text-left transition-all cursor-pointer min-w-[180px]',
+                  i === selectedIndex
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                    : 'border-border hover:border-primary/30'
+                )}
+              >
+                <p className="font-medium text-sm truncate">{rm.title}</p>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${rm.progress}%` }} />
+                  </div>
+                  <span className="text-xs font-medium tabular-nums shrink-0">{rm.progress}%</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Roadmap header */}
         <div>
           <h2 className="text-xl font-bold tracking-tight">{currentRoadmap.title}</h2>
@@ -95,30 +161,31 @@ export default function RoadmapPage() {
         {currentRoadmap.milestones && currentRoadmap.milestones.length > 0 && (
           <div>
             <h3 className="text-xl font-semibold mb-4">Milestones</h3>
-            <RoadmapTimeline milestones={currentRoadmap.milestones} />
-          </div>
-        )}
-
-        {/* Other roadmaps */}
-        {roadmaps.length > 1 && (
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Other Career Paths</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {roadmaps.slice(1).map((rm) => (
-                <Card key={rm.id} className="cursor-pointer hover:border-primary/30 transition-colors">
-                  <CardContent className="pt-4">
-                    <h4 className="font-medium">{rm.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-1">{rm.description}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
-                        <div className="h-full bg-primary/60 rounded-full" style={{ width: `${rm.progress}%` }} />
-                      </div>
-                      <span className="text-xs font-medium tabular-nums">{rm.progress}%</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <RoadmapTimeline
+              milestones={currentRoadmap.milestones}
+              roadmapId={currentRoadmap.id}
+              quizAttempts={quizAttempts}
+              milestoneItemIds={milestoneItemIds}
+              onTaskToggle={async (_milestoneId, taskId) => {
+                const task = currentRoadmap.milestones
+                  .flatMap(m => m.tasks)
+                  .find(t => t.id === taskId);
+                if (!task) return;
+                try {
+                  const res = await apiFetch(`/api/tasks/${taskId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ completed: !task.completed }),
+                  });
+                  if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.error || 'Failed to update task');
+                    return;
+                  }
+                  fetchRoadmaps();
+                } catch {}
+              }}
+              onQuizComplete={() => fetchRoadmaps()}
+            />
           </div>
         )}
       </div>

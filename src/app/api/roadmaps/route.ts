@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
           description: m.description,
           dueDate: m.due_date,
           completed: !!m.completed,
+          itemId: m.item_id ? Number(m.item_id) : null,
           tasks: tasks.map((t: any) => ({
             id: String(t.id),
             title: t.title,
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
       return {
         id: String(r.id),
         careerId: r.career_slug,
+        careerNumericId: String(r.career_id),
         studentId: String(r.user_id),
         title: r.title,
         description: r.description,
@@ -91,10 +93,21 @@ export async function POST(req: NextRequest) {
     if (milestones?.length) {
       for (let i = 0; i < milestones.length; i++) {
         const m = milestones[i];
-        await insert(
-          'INSERT INTO milestones (roadmap_id, title, description, due_date, sort_order) VALUES (?,?,?,?,?)',
-          [roadmapId, m.title, m.description || '', m.dueDate, i]
+        const msId = await insert(
+          'INSERT INTO milestones (roadmap_id, title, description, due_date, sort_order, item_id) VALUES (?,?,?,?,?,?)',
+          [roadmapId, m.title, m.description || '', m.dueDate, i, m.itemId || null]
         );
+
+        // Create tasks linked to this milestone
+        if (m.tasks?.length) {
+          for (const t of m.tasks) {
+            const taskDue = t.dueDate || m.dueDate;
+            await insert(
+              'INSERT INTO tasks (user_id, milestone_id, title, description, category, priority, due_date) VALUES (?,?,?,?,?,?,?)',
+              [authResult.userId, msId, t.title, t.description || null, t.category || 'study', t.priority || 'medium', taskDue]
+            );
+          }
+        }
       }
     }
 

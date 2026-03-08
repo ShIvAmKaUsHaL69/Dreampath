@@ -21,6 +21,7 @@ import {
   X, Save, Eye, ListTodo, ChevronDown,
 } from 'lucide-react';
 import Link from 'next/link';
+import { RoadmapBuilder } from '@/components/admin/RoadmapBuilder';
 
 /* ── Types ──────────────────────── */
 interface DashboardStats {
@@ -42,9 +43,7 @@ interface AdminCareer {
 interface AdminResource {
   id: number; title: string; type: string; url: string; description: string; career_id: number | null; career_title: string;
 }
-interface DefaultTask {
-  id: number; title: string; description: string; category: string; priority: string;
-}
+
 
 /* ── Helpers ──────────────────────── */
 const CATEGORIES = ['Technology', 'Healthcare', 'Business & Finance', 'Design & Construction', 'Law & Governance', 'Science & Research', 'Media & Communication', 'Education', 'Arts & Entertainment'];
@@ -72,8 +71,7 @@ export default function AdminPage() {
   const [showCareerForm, setShowCareerForm] = useState(false);
   const [editingCareer, setEditingCareer] = useState<AdminCareer | null>(null);
   const [showResourceForm, setShowResourceForm] = useState(false);
-  const [showTasksFor, setShowTasksFor] = useState<number | null>(null);
-  const [defaultTasks, setDefaultTasks] = useState<DefaultTask[]>([]);
+  const [showRoadmapFor, setShowRoadmapFor] = useState<number | null>(null);
   const [viewingUser, setViewingUser] = useState<any>(null);
   const [userTasks, setUserTasks] = useState<any[]>([]);
   const [userRoadmaps, setUserRoadmaps] = useState<any[]>([]);
@@ -82,8 +80,6 @@ export default function AdminPage() {
   const [cf, setCf] = useState({ slug: '', title: '', category: CATEGORIES[0], description: '', dailyLife: '', studyDuration: '', averageSalary: '', lifestyle: '', growthPotential: 'medium', riskLevel: 'medium', competition: 'medium', difficulty: 'medium', academicPath: '', entranceExams: '', collegeTypes: '', backupOptions: '', skillsRequired: '' });
   // Resource form
   const [rf, setRf] = useState({ title: '', type: 'article', url: '', description: '', careerId: '' });
-  // Default task form
-  const [tf, setTf] = useState({ title: '', description: '', category: 'study', priority: 'medium' });
   // Notification form
   const [notifTitle, setNotifTitle] = useState('');
   const [notifMessage, setNotifMessage] = useState('');
@@ -116,11 +112,6 @@ export default function AdminPage() {
     const res = await apiFetch('/api/admin/notifications');
     if (res.ok) setNotifications((await res.json()).notifications || []);
   }, [apiFetch]);
-
-  const fetchDefaultTasks = async (careerId: number) => {
-    const res = await apiFetch(`/api/admin/careers/${careerId}/tasks`);
-    if (res.ok) setDefaultTasks((await res.json()).tasks);
-  };
 
   const fetchUserDetail = async (userId: number) => {
     const res = await apiFetch(`/api/admin/users/${userId}`);
@@ -235,25 +226,6 @@ export default function AdminPage() {
     } finally { setSaving(false); }
   };
 
-  const addDefaultTask = async () => {
-    if (!tf.title || !showTasksFor) return;
-    const res = await apiFetch(`/api/admin/careers/${showTasksFor}/tasks`, {
-      method: 'POST', body: JSON.stringify(tf),
-    });
-    if (res.ok) {
-      showToast('Task added', 'success');
-      setTf({ title: '', description: '', category: 'study', priority: 'medium' });
-      fetchDefaultTasks(showTasksFor);
-    }
-  };
-
-  const deleteDefaultTask = async (taskId: number) => {
-    if (!showTasksFor) return;
-    await apiFetch(`/api/admin/careers/${showTasksFor}/tasks`, {
-      method: 'DELETE', body: JSON.stringify({ taskId }),
-    });
-    fetchDefaultTasks(showTasksFor);
-  };
 
   const sendNotification = async () => {
     if (!notifTitle || !notifMessage) return;
@@ -293,7 +265,7 @@ export default function AdminPage() {
             <Link href="/dashboard"><Button variant="ghost" size="icon" className="cursor-pointer"><ArrowLeft className="h-5 w-5" /></Button></Link>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">D</div>
-              <span className="text-xl font-bold">DreamPath Admin</span>
+              <span className="text-xl font-bold">DreamRoute Admin</span>
             </div>
           </div>
           <Badge variant="outline">Super Admin</Badge>
@@ -312,7 +284,7 @@ export default function AdminPage() {
               { id: 'notifications', label: 'Notifications', icon: Bell },
               { id: 'analytics', label: 'Analytics', icon: BarChart3 },
             ].map((item) => (
-              <Button key={item.id} variant={activeTab === item.id ? 'secondary' : 'ghost'} className="w-full justify-start gap-2 cursor-pointer" onClick={() => { setActiveTab(item.id); setShowCareerForm(false); setShowResourceForm(false); setShowTasksFor(null); setViewingUser(null); }}>
+              <Button key={item.id} variant={activeTab === item.id ? 'secondary' : 'ghost'} className="w-full justify-start gap-2 cursor-pointer" onClick={() => { setActiveTab(item.id); setShowCareerForm(false); setShowResourceForm(false); setShowRoadmapFor(null); setViewingUser(null); }}>
                 <item.icon className="h-4 w-4" /> {item.label}
               </Button>
             ))}
@@ -469,7 +441,7 @@ export default function AdminPage() {
           )}
 
           {/* ── Careers ──────────────────────── */}
-          {activeTab === 'careers' && !showTasksFor && (
+          {activeTab === 'careers' && !showRoadmapFor && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold">Manage Careers</h2>
@@ -542,7 +514,7 @@ export default function AdminPage() {
                         <TableCell><Badge variant="outline" className="capitalize">{(career.difficulty || '').replace('-', ' ')}</Badge></TableCell>
                         <TableCell><Badge className="capitalize">{(career.growth_potential || '').replace('-', ' ')}</Badge></TableCell>
                         <TableCell className="text-right space-x-1">
-                          <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => { setShowTasksFor(career.id); fetchDefaultTasks(career.id); }} title="Manage Tasks"><ListTodo className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => setShowRoadmapFor(career.id)} title="Roadmap Builder"><ListTodo className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => editCareer(career)} title="Edit"><Edit className="h-4 w-4" /></Button>
                           <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => deleteCareer(career.id)} title="Delete"><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </TableCell>
@@ -554,62 +526,13 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* ── Career Predefined Tasks ──────────────────────── */}
-          {activeTab === 'careers' && showTasksFor && (
-            <div className="space-y-6">
-              <Button variant="ghost" onClick={() => setShowTasksFor(null)} className="gap-2 cursor-pointer"><ArrowLeft className="h-4 w-4" /> Back to Careers</Button>
-              <h2 className="text-2xl font-bold">Predefined Tasks — {careers.find(c => c.id === showTasksFor)?.title}</h2>
-              <p className="text-sm text-muted-foreground">These tasks are auto-added when a user selects this career.</p>
-
-              {/* Add Task */}
-              <Card className="border-primary/30">
-                <CardHeader className="pb-3"><CardTitle className="text-sm">Add Predefined Task</CardTitle></CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5"><Label className="text-xs">Title *</Label><Input value={tf.title} onChange={e => setTf({ ...tf, title: e.target.value })} placeholder="e.g., Research entrance exams" /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">Description</Label><Input value={tf.description} onChange={e => setTf({ ...tf, description: e.target.value })} placeholder="Optional description" /></div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Category</Label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="w-full justify-between h-9 text-xs capitalize cursor-pointer">{tf.category} <ChevronDown className="h-3 w-3" /></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent>{TASK_CATEGORIES.map(c => <DropdownMenuItem key={c} onClick={() => setTf({ ...tf, category: c })} className="capitalize cursor-pointer">{c}</DropdownMenuItem>)}</DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Priority</Label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="w-full justify-between h-9 text-xs capitalize cursor-pointer">{tf.priority} <ChevronDown className="h-3 w-3" /></Button></DropdownMenuTrigger>
-                        <DropdownMenuContent>{PRIORITIES.map(p => <DropdownMenuItem key={p} onClick={() => setTf({ ...tf, priority: p })} className="capitalize cursor-pointer">{p}</DropdownMenuItem>)}</DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <div className="flex items-end">
-                      <Button onClick={addDefaultTask} disabled={!tf.title} className="w-full cursor-pointer gap-2"><Plus className="h-4 w-4" /> Add</Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Tasks List */}
-              <Card><CardContent className="p-0">
-                <Table>
-                  <TableHeader><TableRow><TableHead>Task</TableHead><TableHead>Description</TableHead><TableHead>Category</TableHead><TableHead>Priority</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {defaultTasks.map(t => (
-                      <TableRow key={t.id}>
-                        <TableCell className="font-medium">{t.title}</TableCell>
-                        <TableCell className="text-muted-foreground max-w-[200px] truncate">{t.description || '-'}</TableCell>
-                        <TableCell><Badge variant="secondary" className="capitalize">{t.category}</Badge></TableCell>
-                        <TableCell><Badge variant="outline" className="capitalize">{t.priority}</Badge></TableCell>
-                        <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => deleteDefaultTask(t.id)} className="cursor-pointer"><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>
-                      </TableRow>
-                    ))}
-                    {defaultTasks.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No predefined tasks yet. Add tasks above.</TableCell></TableRow>}
-                  </TableBody>
-                </Table>
-              </CardContent></Card>
-            </div>
+          {/* ── Roadmap Builder ──────────────────────── */}
+          {activeTab === 'careers' && showRoadmapFor && (
+            <RoadmapBuilder
+              careerId={showRoadmapFor}
+              careerTitle={careers.find(c => c.id === showRoadmapFor)?.title || ''}
+              onBack={() => setShowRoadmapFor(null)}
+            />
           )}
 
           {/* ── Resources ──────────────────────── */}

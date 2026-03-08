@@ -26,7 +26,7 @@ export default function Home() {
       <header className="flex items-center justify-between px-6 lg:px-12 py-5" style={reveal(100)}>
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
           <span className="h-8 w-8 rounded-md bg-primary text-primary-foreground grid place-items-center text-sm font-extrabold">D</span>
-          <span className="font-bold tracking-tight text-lg">DreamPath</span>
+          <span className="font-bold tracking-tight text-lg">DreamRoute</span>
         </Link>
         <nav className="flex items-center gap-2">
           {isAuthenticated && onboardingComplete ? (
@@ -129,7 +129,7 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <span className="h-5 w-5 rounded bg-foreground text-background grid place-items-center text-[9px] font-extrabold">D</span>
-            <span className="font-semibold text-foreground">DreamPath</span>
+            <span className="font-semibold text-foreground">DreamRoute</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
           <div className="flex gap-5 font-medium">

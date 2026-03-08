@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DreamPath — Career Exploration for Students",
+  title: "DreamRoute — Career Exploration for Students",
   description: "Discover careers, build personalized roadmaps, and track your progress toward your dream career.",
 };
 

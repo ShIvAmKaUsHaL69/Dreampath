@@ -33,7 +33,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex h-14 items-center gap-2 px-5 border-b">
         <span className="h-7 w-7 rounded-md bg-primary text-primary-foreground grid place-items-center text-xs font-extrabold">D</span>
-        <span className="text-base font-bold tracking-tight">DreamPath</span>
+        <span className="text-base font-bold tracking-tight">DreamRoute</span>
       </div>
 
       {/* User */}

@@ -18,7 +18,7 @@ import {
 const introScreens = [
   {
     lucideIcon: Sparkles,
-    title: 'Welcome to DreamPath',
+    title: 'Welcome to DreamRoute',
     description: 'Your AI-powered career guide. Explore careers, build personalized roadmaps, and achieve your dreams — step by step.',
   },
   {
@@ -55,8 +55,8 @@ const skillOptions = [
 export function OnboardingFlow() {
   const router = useRouter();
   const { onboardingData, setOnboardingData, setOnboardingComplete, setStudent, setIsAuthenticated } = useApp();
-  const [step, setStep] = useState(0); // 0-2 = intro screens, 3-7 = data collection
-  const totalSteps = 8; // 3 intro + 5 data collection
+  const [step, setStep] = useState(0); // 0-2 = intro screens, 3-6 = data collection
+  const totalSteps = 7; // 3 intro + 4 data collection
   const introStepCount = 3;
 
   const progress = (step / (totalSteps - 1)) * 100;
@@ -160,14 +160,12 @@ export function OnboardingFlow() {
     const dataStep = step - introStepCount + 1;
     switch (dataStep) {
       case 1:
-        return onboardingData.name.length >= 2 && onboardingData.email.includes('@');
-      case 2:
         return onboardingData.grade > 0;
-      case 3:
+      case 2:
         return onboardingData.interests.length >= 3;
-      case 4:
+      case 3:
         return onboardingData.hobbies.length >= 1 && onboardingData.skills.length >= 1;
-      case 5:
+      case 4:
         return true;
       default:
         return false;
@@ -185,7 +183,7 @@ export function OnboardingFlow() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shadow-lg shadow-primary/25">
               D
             </div>
-            <span className="text-2xl font-bold">DreamPath</span>
+            <span className="text-2xl font-bold">DreamRoute</span>
           </div>
           <Progress value={progress} className="h-2 mb-4" />
 
@@ -203,18 +201,16 @@ export function OnboardingFlow() {
           {!isIntroScreen && (
             <>
               <CardTitle>
-                {dataStep === 1 && "Let's get to know you"}
-                {dataStep === 2 && 'Tell us about your academics'}
-                {dataStep === 3 && 'What subjects interest you?'}
-                {dataStep === 4 && 'Your hobbies & skills'}
-                {dataStep === 5 && 'How serious are your goals?'}
+                {dataStep === 1 && 'Tell us about your academics'}
+                {dataStep === 2 && 'What subjects interest you?'}
+                {dataStep === 3 && 'Your hobbies & skills'}
+                {dataStep === 4 && 'How serious are your goals?'}
               </CardTitle>
               <CardDescription>
-                {dataStep === 1 && 'Start by telling us your name and email'}
-                {dataStep === 2 && 'Select your current class and academic stream'}
-                {dataStep === 3 && 'Select at least 3 subjects that interest you'}
-                {dataStep === 4 && 'Help us understand you better'}
-                {dataStep === 5 && 'This helps us customize your roadmap'}
+                {dataStep === 1 && 'Select your current class and academic stream'}
+                {dataStep === 2 && 'Select at least 3 subjects that interest you'}
+                {dataStep === 3 && 'Help us understand you better'}
+                {dataStep === 4 && 'This helps us customize your roadmap'}
               </CardDescription>
             </>
           )}
@@ -245,37 +241,8 @@ export function OnboardingFlow() {
             );
           })()}
 
-          {/* Step 1: Basic Info */}
+          {/* Step 1: Academic Info */}
           {!isIntroScreen && dataStep === 1 && (
-            <div className="space-y-4 animate-fade-in-up">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  value={onboardingData.name}
-                  onChange={(e) =>
-                    setOnboardingData({ ...onboardingData, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={onboardingData.email}
-                  onChange={(e) =>
-                    setOnboardingData({ ...onboardingData, email: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Academic Info */}
-          {!isIntroScreen && dataStep === 2 && (
             <div className="space-y-6 animate-fade-in-up">
               <div className="space-y-3">
                 <Label>Select your class</Label>
@@ -328,8 +295,8 @@ export function OnboardingFlow() {
             </div>
           )}
 
-          {/* Step 3: Interests */}
-          {!isIntroScreen && dataStep === 3 && (
+          {/* Step 2: Interests */}
+          {!isIntroScreen && dataStep === 2 && (
             <div className="space-y-4 animate-fade-in-up">
               <p className="text-sm text-muted-foreground">
                 Selected: {onboardingData.interests.length} / 3 minimum
@@ -357,8 +324,8 @@ export function OnboardingFlow() {
             </div>
           )}
 
-          {/* Step 4: Hobbies & Skills */}
-          {!isIntroScreen && dataStep === 4 && (
+          {/* Step 3: Hobbies & Skills */}
+          {!isIntroScreen && dataStep === 3 && (
             <div className="space-y-6 animate-fade-in-up">
               <div className="space-y-3">
                 <Label>Hobbies (select at least 1)</Label>
@@ -403,8 +370,8 @@ export function OnboardingFlow() {
             </div>
           )}
 
-          {/* Step 5: Goal Intensity */}
-          {!isIntroScreen && dataStep === 5 && (
+          {/* Step 4: Goal Intensity */}
+          {!isIntroScreen && dataStep === 4 && (
             <div className="space-y-4 animate-fade-in-up">
               <RadioGroup
                 value={onboardingData.goalIntensity}

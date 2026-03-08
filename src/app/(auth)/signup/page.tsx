@@ -68,7 +68,7 @@ export default function SignupPage() {
         <div className="relative z-10 max-w-md px-8 text-center">
           <div className="flex items-center justify-center gap-3 mb-8">
             <span className="h-12 w-12 rounded-xl bg-primary text-primary-foreground grid place-items-center text-xl font-extrabold">D</span>
-            <span className="font-bold tracking-tight text-3xl">DreamPath</span>
+            <span className="font-bold tracking-tight text-3xl">DreamRoute</span>
           </div>
           <h2 className="text-2xl font-semibold mb-4">Start your career journey today</h2>
           <p className="text-muted-foreground text-lg leading-relaxed">
@@ -82,7 +82,7 @@ export default function SignupPage() {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <span className="h-8 w-8 rounded-md bg-primary text-primary-foreground grid place-items-center text-sm font-extrabold">D</span>
-            <span className="font-bold tracking-tight text-lg">DreamPath</span>
+            <span className="font-bold tracking-tight text-lg">DreamRoute</span>
           </div>
 
           <h1 className="text-3xl font-bold mb-2">Create your account</h1>
