@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
        WHERE ${whereClause}
        GROUP BY c.id
        ORDER BY c.title ASC
-       LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+       LIMIT ${limit} OFFSET ${offset}`,
+      params
     );
 
     // Parse JSON fields and skills

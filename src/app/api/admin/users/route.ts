@@ -23,8 +23,8 @@ export async function GET(req: NextRequest) {
 
     const users = await query<any[]>(
       `SELECT id, name, email, grade, stream, goal_intensity, streak, total_points, is_active, created_at
-       FROM users WHERE ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+       FROM users WHERE ${where} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+      params
     );
 
     const total = await queryOne<any>(`SELECT COUNT(*) as cnt FROM users WHERE ${where}`, params);

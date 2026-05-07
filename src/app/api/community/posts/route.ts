@@ -12,8 +12,7 @@ export async function GET(req: NextRequest) {
     const posts = await query<any[]>(
       `SELECT p.*, u.name as author_name, u.id as author_id
        FROM posts p JOIN users u ON p.user_id = u.id
-       ORDER BY p.created_at DESC LIMIT ? OFFSET ?`,
-      [limit, offset]
+       ORDER BY p.created_at DESC LIMIT ${limit} OFFSET ${offset}`
     );
 
     // Fetch comments for each post
