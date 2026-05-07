@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
+import { parsePaginationParams } from '@/lib/pagination';
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
     const category = searchParams.get('category') || '';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = (page - 1) * limit;
+    const { limit, offset } = parsePaginationParams(searchParams, {
+      defaultLimit: 50,
+      maxLimit: 200,
+    });
 
     let whereClause = '1=1';
     const params: any[] = [];

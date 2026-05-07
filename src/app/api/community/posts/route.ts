@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/auth';
 import { query, insert, update, queryOne } from '@/lib/db';
+import { parsePaginationParams } from '@/lib/pagination';
 
 // GET community posts
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const offset = (page - 1) * limit;
+    const { limit, offset } = parsePaginationParams(searchParams);
 
     const posts = await query<any[]>(
       `SELECT p.*, u.name as author_name, u.id as author_id

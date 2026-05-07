@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DreamRoute — Career Exploration for Students</title>
+  <meta name="description" content="Discover careers, build personalized roadmaps, and track your progress toward your dream career.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <header class="nav" id="nav">
+    <a href="#" class="logo">
+      <span class="logo-icon">D</span>
+      <span class="logo-text">DreamRoute</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#how-it-works" class="nav-link">How it Works</a>
+      <a href="#testimonials" class="nav-link">Testimonials</a>
+      <button class="btn btn-ghost">Log in</button>
+      <button class="btn btn-primary btn-rounded">
+        Get Started
+        <i data-lucide="arrow-right" class="icon-sm"></i>
+      </button>
+    </nav>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+      <i data-lucide="menu"></i>
+    </button>
+  </header>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#features" class="mobile-link">Features</a>
+    <a href="#how-it-works" class="mobile-link">How it Works</a>
+    <a href="#testimonials" class="mobile-link">Testimonials</a>
+    <button class="btn btn-ghost">Log in</button>
+    <button class="btn btn-primary btn-rounded">Get Started</button>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content reveal">
+      <p class="hero-tag">Career guidance for class 8 – 12</p>
+      <h1 class="hero-title">Figure out your career before you pick a stream.</h1>
+      <p class="hero-description">
+        Explore 100+ career paths with real data. Get a personalized roadmap.
+        Track your progress — all guided by AI.
+      </p>
+      <div class="hero-buttons">
+        <button class="btn btn-primary btn-lg btn-rounded">
+          Get Started Free
+          <i data-lucide="arrow-right" class="icon"></i>
+        </button>
+        <button class="btn btn-outline btn-lg btn-rounded">
+          Browse Careers
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-value">100+</div>
+          <div class="stat-label">Career paths</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">10k+</div>
+          <div class="stat-label">Students</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">Class 8–12</div>
+          <div class="stat-label">Age range</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual reveal reveal-delay-2">
+      <div class="hero-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i data-lucide="compass"></i>
+          </div>
+          <div>
+            <div class="card-title">Your Roadmap</div>
+            <div class="card-subtitle">Software Engineer</div>
+          </div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 35%"></div>
+        </div>
+        <div class="card-stats">
+          <span>35% Complete</span>
+          <span class="streak"><i data-lucide="flame" class="icon-xs"></i> 15 day streak</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-tag">Why DreamRoute?</p>
+        <h2 class="section-title">Everything you need to discover your dream career</h2>
+        <p class="section-description">
+          We combine AI-powered guidance with real career data to help students make informed decisions about their future.
+        </p>
+      </div>
+      
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="feature-icon">
+            <i data-lucide="search"></i>
+          </div>
+          <h3 class="feature-title">Career Explorer</h3>
+          <p class="feature-description">
+            Browse 100+ careers with detailed info on salaries, entrance exams, required skills, and job market trends.
+          </p>
+        </div>
+        
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon feature-icon-accent">
+            <i data-lucide="map"></i>
+          </div>
+          <h3 class="feature-title">Personalized Roadmaps</h3>
+          <p class="feature-description">
+            Get a step-by-step plan tailored to your interests, stream, and goals — from class 8 to career launch.
+          </p>
+        </div>
+        
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon feature-icon-warning">
+            <i data-lucide="bot"></i>
+          </div>
+          <h3 class="feature-title">AI Career Guide</h3>
+          <p class="feature-description">
+            Chat with an AI assistant that knows your profile and gives personalized advice anytime you need it.
+          </p>
+        </div>
+        
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon feature-icon-success">
+            <i data-lucide="trophy"></i>
+          </div>
+          <h3 class="feature-title">Gamified Progress</h3>
+          <p class="feature-description">
+            Stay motivated with streaks, badges, and achievements. Track every step of your journey visually.
+          </p>
+        </div>
+        
+        <div class="feature-card reveal reveal-delay-4">
+          <div class="feature-icon feature-icon-purple">
+            <i data-lucide="users"></i>
+          </div>
+          <h3 class="feature-title">Community</h3>
+          <p class="feature-description">
+            Connect with students on similar paths. Share experiences, ask questions, and learn from each other.
+          </p>
+        </div>
+        
+        <div class="feature-card reveal reveal-delay-5">
+          <div class="feature-icon feature-icon-pink">
+            <i data-lucide="book-open"></i>
+          </div>
+          <h3 class="feature-title">Curated Resources</h3>
+          <p class="feature-description">
+            Access hand-picked videos, articles, and guides for JEE, NEET, and skill-building — all in one place.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it Works Section -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-tag">How it works</p>
+        <h2 class="section-title">Four steps from confusion to clarity.</h2>
+      </div>
+      
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <span class="step-number">01</span>
+          <h3 class="step-title">Discover</h3>
+          <p class="step-description">Browse careers with salaries, entrance exams, and growth data.</p>
+        </div>
+        <div class="step-card reveal reveal-delay-1">
+          <span class="step-number">02</span>
+          <h3 class="step-title">Plan</h3>
+          <p class="step-description">Get a roadmap matched to your stream and interests.</p>
+        </div>
+        <div class="step-card reveal reveal-delay-2">
+          <span class="step-number">03</span>
+          <h3 class="step-title">Learn</h3>
+          <p class="step-description">Chat with an AI guide that adapts to your profile.</p>
+        </div>
+        <div class="step-card reveal reveal-delay-3">
+          <span class="step-number">04</span>
+          <h3 class="step-title">Achieve</h3>
+          <p class="step-description">Build streaks, earn badges, track every step.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="container">
+      <div class="stats-grid reveal">
+        <div class="stats-card">
+          <div class="stats-icon">
+            <i data-lucide="briefcase"></i>
+          </div>
+          <div class="stats-value">100+</div>
+          <div class="stats-label">Career Paths</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-icon">
+            <i data-lucide="users"></i>
+          </div>
+          <div class="stats-value">10,000+</div>
+          <div class="stats-label">Active Students</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-icon">
+            <i data-lucide="award"></i>
+          </div>
+          <div class="stats-value">50,000+</div>
+          <div class="stats-label">Tasks Completed</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-icon">
+            <i data-lucide="star"></i>
+          </div>
+          <div class="stats-value">4.9</div>
+          <div class="stats-label">Average Rating</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section class="testimonials" id="testimonials">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-tag">Testimonials</p>
+        <h2 class="section-title">Loved by students across India</h2>
+        <p class="section-description">
+          See what students and parents have to say about their experience with DreamRoute.
+        </p>
+      </div>
+      
+      <div class="testimonials-grid">
+        <div class="testimonial-card reveal">
+          <div class="testimonial-content">
+            <i data-lucide="quote" class="quote-icon"></i>
+            <p>"DreamRoute helped me realize that Data Science was the perfect fit for me. The roadmap feature is incredible — it breaks down everything I need to do!"</p>
+          </div>
+          <div class="testimonial-author">
+            <div class="author-avatar">PS</div>
+            <div>
+              <div class="author-name">Priya Sharma</div>
+              <div class="author-role">Class 12, Delhi</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="testimonial-card reveal reveal-delay-1">
+          <div class="testimonial-content">
+            <i data-lucide="quote" class="quote-icon"></i>
+            <p>"As a parent, I was worried about my son's career choices. DreamRoute gave us clarity and a structured path. The AI assistant answers all our questions instantly."</p>
+          </div>
+          <div class="testimonial-author">
+            <div class="author-avatar">RK</div>
+            <div>
+              <div class="author-name">Rajesh Kumar</div>
+              <div class="author-role">Parent, Mumbai</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="testimonial-card reveal reveal-delay-2">
+          <div class="testimonial-content">
+            <i data-lucide="quote" class="quote-icon"></i>
+            <p>"The streak system keeps me motivated every day. I've completed 30 days straight! It's like a game, but for my future career."</p>
+          </div>
+          <div class="testimonial-author">
+            <div class="author-avatar">AV</div>
+            <div>
+              <div class="author-name">Arjun Verma</div>
+              <div class="author-role">Class 10, Bangalore</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Careers Preview Section -->
+  <section class="careers-preview">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-tag">Popular Careers</p>
+        <h2 class="section-title">Explore trending career paths</h2>
+      </div>
+      
+      <div class="careers-grid">
+        <div class="career-card reveal">
+          <div class="career-icon">
+            <i data-lucide="code-2"></i>
+          </div>
+          <h3 class="career-title">Software Engineer</h3>
+          <div class="career-meta">
+            <span><i data-lucide="indian-rupee" class="icon-xs"></i> 8-40 LPA</span>
+            <span><i data-lucide="trending-up" class="icon-xs"></i> High Growth</span>
+          </div>
+        </div>
+        
+        <div class="career-card reveal reveal-delay-1">
+          <div class="career-icon career-icon-blue">
+            <i data-lucide="bar-chart-3"></i>
+          </div>
+          <h3 class="career-title">Data Scientist</h3>
+          <div class="career-meta">
+            <span><i data-lucide="indian-rupee" class="icon-xs"></i> 10-50 LPA</span>
+            <span><i data-lucide="trending-up" class="icon-xs"></i> Very High Growth</span>
+          </div>
+        </div>
+        
+        <div class="career-card reveal reveal-delay-2">
+          <div class="career-icon career-icon-red">
+            <i data-lucide="heart-pulse"></i>
+          </div>
+          <h3 class="career-title">Doctor (MBBS)</h3>
+          <div class="career-meta">
+            <span><i data-lucide="indian-rupee" class="icon-xs"></i> 6-25 LPA</span>
+            <span><i data-lucide="trending-up" class="icon-xs"></i> Stable</span>
+          </div>
+        </div>
+        
+        <div class="career-card reveal reveal-delay-3">
+          <div class="career-icon career-icon-purple">
+            <i data-lucide="pencil-ruler"></i>
+          </div>
+          <h3 class="career-title">Product Designer</h3>
+          <div class="career-meta">
+            <span><i data-lucide="indian-rupee" class="icon-xs"></i> 8-35 LPA</span>
+            <span><i data-lucide="trending-up" class="icon-xs"></i> High Growth</span>
+          </div>
+        </div>
+        
+        <div class="career-card reveal reveal-delay-4">
+          <div class="career-icon career-icon-orange">
+            <i data-lucide="building-2"></i>
+          </div>
+          <h3 class="career-title">Civil Engineer</h3>
+          <div class="career-meta">
+            <span><i data-lucide="indian-rupee" class="icon-xs"></i> 5-20 LPA</span>
+            <span><i data-lucide="trending-up" class="icon-xs"></i> Moderate</span>
+          </div>
+        </div>
+        
+        <div class="career-card reveal reveal-delay-5">
+          <div class="career-icon career-icon-green">
+            <i data-lucide="plane"></i>
+          </div>
+          <h3 class="career-title">Pilot</h3>
+          <div class="career-meta">
+            <span><i data-lucide="indian-rupee" class="icon-xs"></i> 15-50 LPA</span>
+            <span><i data-lucide="trending-up" class="icon-xs"></i> High Growth</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="careers-cta reveal">
+        <button class="btn btn-outline btn-lg btn-rounded">
+          View All 100+ Careers
+          <i data-lucide="arrow-right" class="icon"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-card reveal">
+        <div class="cta-content">
+          <h2 class="cta-title">Ready to plan your future?</h2>
+          <p class="cta-description">Takes 3 minutes. Free forever.</p>
+        </div>
+        <button class="btn btn-cta btn-lg btn-rounded">
+          Get Started Free
+          <i data-lucide="arrow-right" class="icon"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section">
+    <div class="container">
+      <div class="section-header reveal">
+        <p class="section-tag">FAQ</p>
+        <h2 class="section-title">Frequently asked questions</h2>
+      </div>
+      
+      <div class="faq-grid">
+        <div class="faq-item reveal">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>Is DreamRoute really free?</span>
+            <i data-lucide="chevron-down" class="faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>Yes! DreamRoute is completely free for all students. We believe every student deserves access to quality career guidance regardless of their financial situation.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item reveal reveal-delay-1">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>Which classes is DreamRoute designed for?</span>
+            <i data-lucide="chevron-down" class="faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>DreamRoute is designed for students from Class 8 to Class 12. The earlier you start exploring careers, the better prepared you'll be to make important decisions about streams and entrance exams.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item reveal reveal-delay-2">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>How does the AI career guide work?</span>
+            <i data-lucide="chevron-down" class="faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>Our AI guide learns about your interests, skills, and goals during onboarding. It then provides personalized advice, answers your questions about careers, and helps you stay on track with your roadmap.</p>
+          </div>
+        </div>
+        
+        <div class="faq-item reveal reveal-delay-3">
+          <button class="faq-question" onclick="toggleFaq(this)">
+            <span>Can parents also use DreamRoute?</span>
+            <i data-lucide="chevron-down" class="faq-icon"></i>
+          </button>
+          <div class="faq-answer">
+            <p>Absolutely! Parents can create accounts to explore careers alongside their children, understand different paths, and support their child's career journey with informed guidance.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <span class="logo-icon">D</span>
+            <span class="logo-text">DreamRoute</span>
+          </a>
+          <p class="footer-tagline">Helping students discover and achieve their dream careers since 2024.</p>
+          <div class="social-links">
+            <a href="#" class="social-link"><i data-lucide="twitter"></i></a>
+            <a href="#" class="social-link"><i data-lucide="instagram"></i></a>
+            <a href="#" class="social-link"><i data-lucide="linkedin"></i></a>
+            <a href="#" class="social-link"><i data-lucide="youtube"></i></a>
+          </div>
+        </div>
+        
+        <div class="footer-links">
+          <h4>Product</h4>
+          <a href="#">Career Explorer</a>
+          <a href="#">Roadmaps</a>
+          <a href="#">AI Guide</a>
+          <a href="#">Community</a>
+        </div>
+        
+        <div class="footer-links">
+          <h4>Resources</h4>
+          <a href="#">JEE Prep</a>
+          <a href="#">NEET Prep</a>
+          <a href="#">Skill Building</a>
+          <a href="#">Blog</a>
+        </div>
+        
+        <div class="footer-links">
+          <h4>Company</h4>
+          <a href="#">About Us</a>
+          <a href="#">Contact</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <div class="footer-copyright">
+          <span class="logo-icon logo-icon-sm">D</span>
+          <span>DreamRoute © 2026. All rights reserved.</span>
+        </div>
+        <div class="footer-legal">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+</body>
+</html>

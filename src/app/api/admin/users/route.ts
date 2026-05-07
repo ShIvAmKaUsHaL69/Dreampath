@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest, requireSuperAdmin } from '@/lib/auth';
 import { query, queryOne } from '@/lib/db';
+import { parsePaginationParams } from '@/lib/pagination';
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,9 +12,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search') || '';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = parsePaginationParams(searchParams);
 
     let where = "role = 'student'";
     const params: any[] = [];
